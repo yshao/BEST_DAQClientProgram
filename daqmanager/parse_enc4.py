@@ -3,7 +3,7 @@
 
 import sys
 import struct
-from best.common.sqliteutils import *
+from common.sqliteutils import *
 from datautils import *
 
 def usage():

@@ -2,7 +2,7 @@ import binascii
 import sys
 import struct
 import os
-from best.common.sqliteutils import DaqDB
+from common.sqliteutils import DaqDB
 
 
 # def usage():

@@ -1,4 +1,4 @@
-from best.common.netutils import *
+from common.netutils import *
 
 ### test scan network ###
 config=Config("config.xml")
@@ -49,7 +49,7 @@ config=Config("config.xml")
 # t3.close()
 #
 # ### test ftp sync basic ###
-# # from best.common.utils.configutil import *
+# # from common.utils.configutil import *
 # from best.daqmanager.ftp_mirror import *
 # config=Config("../config.xml")
 # login="admin"
@@ -100,7 +100,7 @@ t3=TelnetClient(archIP)
 t3.send("DAQArchImuS1")
 
 ### test ftp sync basic ###
-# from best.common.utils.configutil import *
+# from common.utils.configutil import *
 from best.daqmanager.ftp_mirror import *
 config=Config("../config.xml")
 login="admin"

@@ -2,19 +2,24 @@
 import sip
 sip.setapi('QString', 2)
 import webbrowser
+import os
+import re
+import sys
+import threading
 from inspect import stack
-from PyQt4 import QtCore, QtGui
+from threading import Thread
+from PyQt4 import QtCore, QtGui, QtXml
 ### ui files
-from ui_daqdialog import Ui_SimpleDAQDialog
-from common.utils import *
-from common.configutils import *
-from common.fileutils import *
-from common.netutils import *
-
+from ui_motorwidget import Ui_MotorWidget
+# from common.utils import *
+# from common.testutils import *
+# from common.sqliteutils import *
+# from common.configutils import *
+# from common.fileutils import *
 
 ### py files
 # from parser_inu import *
-from ftp_mirror import *
+
 
 script_name = re.sub('\..*','',os.path.basename(sys.argv[0]))
 starting_dir = os.getcwd()
@@ -34,39 +39,6 @@ DATA_DIR="c:/test_station/Demo/Data"
 
 from multiprocessing import Process, Queue
 
-### Running tasks ###
-
-class FtpSyncThread(QtCore.QThread):
-    data_downloaded = QtCore.pyqtSignal(object)
-
-    def __init__(self, file):
-        QtCore.QThread.__init__(self)
-        self.file=file
-        self.queue=Queue()
-        self.writer = Process(target=ftp_mirror, args=(self.queue,))
-
-    def run(self):
-        # info = urllib2.urlopen(self.url).info()
-        # parse_inu(self.queue)
-        self.writer.start()
-        self.writer.join()
-        self.ftp_sync.emit('%s' % (self.file))
-
-    def update(self,queue):
-      while 1:
-        msg = queue.get()         # Read from the queue and do nothing
-        if (msg == 'result: '):
-            self.data_downloaded.emit('%s' % self.parse_result(msg))
-            break
-        else:
-            self.data_downloaded.emit('%s' % (msg))
-
-    def parse_result(self,msg):
-        ""
-        # return "PARSED: "+msg
-        self.data_downloaded.emit('Result: %s' % (msg))
-
-
 class ClientLogger:
     def __init__(self,gui_logger):
         self.gui_logger=gui_logger
@@ -84,22 +56,16 @@ class ClientLogger:
         # logger.warn(txt)
 
 
-### main gui ###
-
-class SimpleDAQDialog(QtGui.QDialog):
+class MotorWidget(QtGui.QWidget):
     ### connects widgets and signals ###
     def __init__(self, parent = None):
-        super(SimpleDAQDialog, self).__init__(parent)
-        self.ui = Ui_SimpleDAQDialog()
+        super(MotorWidget, self).__init__(parent)
+        self.ui = Ui_MotorWidget()
         self.ui.setupUi(self)
 
         ### init ###
-        self.logger = ClientLogger(self.ui.outLogBrowser)
-        self.config = Config('config.xml')
-        DATA_DIR = self.config.get("LOCAL_DIR")
-        
-
-        
+        # self.logger = ClientLogger(self.ui.outLogBrowser)
+        # self.config = Config('config.xml')
         # print self.config.get("IP_ENCODER")
         # self.config.read("daqmanager.log")
 
@@ -109,9 +75,10 @@ class SimpleDAQDialog(QtGui.QDialog):
         # self.ui.outSize.setText("Size of folder: "+ str(self.folder_calc_size()))
 
         #--- inputs group ---
-        self.ui.inSend.clicked.connect(self.guiSend)
-        self.ui.inStartDAQ.clicked.connect(self.guiStartDAQ)
-        self.ui.inFtpSync.clicked.connect(self.guiFtpSync)
+        self.ui.inDownloadProgram.clicked.connect(self.guiDownloadProgram)
+        self.ui.inDownloadProfile.clicked.connect(self.guiDownloadProfile)
+        self.ui.inOpenScript.clicked.connect(self.guiOpenScript)
+        self.ui.inOpenMotorMonitor.clicked.connect(self.guiOpenMotorMonitor)
 
         #--- output group ---
         #self.ui.buttonSendCommand.setEnabled(0)
@@ -135,11 +102,13 @@ class SimpleDAQDialog(QtGui.QDialog):
         exit=QtGui.QAction(self)
         # self.setWindowTitle("Processing PBar")
 
+    ### gui utilities methods ###
     def selectFile(self):   #Open a dialog to locate the sqlite file and some more...
-        path = QtGui.QFileDialog.getOpenFileName(None,QtCore.QString.fromLocal8Bit("Select database:"),"*.sqlite")
+        path = QtGui.QFileDialog.getOpenFileName(None,"Select script:","*.motor")
+
         if path:
-            self.database = path # To make possible cancel the FileDialog and continue loading a predefined db
-        self.openDBFile()
+            self.ui.inScript = path # To make possible cancel the FileDialog and continue loading a predefined db
+        # self.load_script()
 
 
     def closeEvent(self,event):
@@ -150,58 +119,61 @@ class SimpleDAQDialog(QtGui.QDialog):
             event.ignore()
 
     ### event handler methods###
-    def guiDetect(self):
+    def guiDownloadProgram(self):
         ""
-        self.logger.log_info("INIT: "+"detecting network")
-        self.daqclient = DAQClient(self.config)
-        
+        script=self.ui.inScript.getLines()
+        self.motor.load_script(script)
 
-    def guiStartDAQ(self):
+    def guiDownloadProfile(self):
         ""
-        self.logger.log_info("INIT: "+"start DAQ from all device")
-        self.daqclient.send_startdaq()
 
-    def guiSend(self):
+    def guiOpenScript(self):
         ""
-        val=self.ui.inSendOpt.itemText(self.ui.inSendOpt.currentIndex())
 
-        self.logger.log_info("INIT: "+val)
-        self.daqclient.send(val)
-        
-    
-    def guiFtpSync(self):
+    def guiOpenMotorMonitor(self):
         ""
-        self.logger.log_info("INIT: "+"logging into server ")
 
-        username=self.config.get("USERNAME")
-        password=self.config.get("PASSWORD")
-        remote_dir=self.config.get("REMOTE_DIR")
-        local_dir=self.config.get("RAWDATA_DIR")
-        host=self.config.get("IP_ENCODER")
-        ip1=(host,21)
-
-        host=self.config.get("IP_RADIOMETER_22-30")
-        ip2=(host,21)
-
-        self.logger.log_info("EXEC: start_mirroring")
-
-        mname="-".join([self.__class__.__name__,stack()[0][3]])
-        self.logger.log_info(" ".join(["INIT:",mname,file]))
-
-        self.logger.log_info(" ".join(["EXEC:",mname]))
-        t1=threading.Thread(self.start_mirroring(),(ip1,username,password,local_dir,remote_dir))
-        self.threads = []
-
-        files=list_files(DATA_DIR)
-
-        for file in files:
-            downloader = FtpSyncThread(file)
-            downloader.ftp_sync.connect(self.on_data_downloaded_done)
-            self.threads.append(downloader)
-            downloader.start()
-
-    def on_data_downloaded_done(self,result):
+    def on_plotting_done(self,result):
         self.logger.log_info("-".join(["RESULT",result]))
+
+    def parse_plotting(self,s):
+        ""
+        result={}
+
+        pattern = re.compile(r"""\|\s*                 # opening bar and whitespace
+                                 '(?P<name>.*?)'       # quoted name
+                                 \s*\|\s*(?P<n1>.*?)   # whitespace, next bar, n1
+                                 \s*\|\s*(?P<n2>.*?)   # whitespace, next bar, n2
+                                 \s*\|""", re.VERBOSE)
+        match = pattern.match(s)
+
+        name = match.group("name")
+        n1 = float(match.group("n1"))
+        n2 = float(match.group("n2"))
+
+
+        result.update({'datasets_plotted': n1})
+        return result
+
+    def parse_daqdecoder(self,s):
+        ""
+        result={}
+
+        pattern = re.compile(r"""\|\s*                 # opening bar and whitespace
+                                 '(?P<name>.*?)'       # quoted name
+                                 \s*\|\s*(?P<n1>.*?)   # whitespace, next bar, n1
+                                 \s*\|\s*(?P<n2>.*?)   # whitespace, next bar, n2
+                                 \s*\|""", re.VERBOSE)
+        match = pattern.match(s)
+
+        name = match.group("name")
+        n1 = float(match.group("n1"))
+        n2 = float(match.group("n2"))
+
+
+        result.update({'packets_found': n1})
+        result.update({'packets_discarded', n2})
+        return result
 
     def parse_ftpmirror(self,s):
         ""
@@ -299,35 +271,12 @@ class SimpleDAQDialog(QtGui.QDialog):
         ""
 
 
-class DecodingTask:
-    def __init__(self):
-        ""
-        self._running=True
-        self.local=threading.local()
-
-    def terminate(self):
-        ""
-        self._running=False
-
-    def __enter__(self):
-        ""
-
-    def __exit__(self):
-        ""
-
-    # def output_formatter(self,ctrl,*args):
-    #     out=ctrl
-    #     for arg in args:
-    #         out += " " + str(arg)
-    #
-    #     return out
-
 if __name__ == '__main__':
 
     import sys
     app = QtGui.QApplication(sys.argv)
-    daq = SimpleDAQDialog()
-    daq.show()
-    sys.exit(app.exec_())
+    # plotbar = PlotDialog()
+    # plotbar.show()
+    # sys.exit(app.exec_())
 
 

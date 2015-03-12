@@ -1,37 +1,5 @@
 UPDATESW=0xB5
-import math
-import telnetlib
-from best.common.configutils import *
-
-class TelnetClient(object):
-  newline = "\n"
-  def __init__(self,host_url,username="admin",password="BEST"):
-    newline="\n"
-    ""
-    try:
-        self.telnet=telnetlib.Telnet(host_url,port=23)
-        self.telnet.read_until("login: ")
-        self.telnet.write(username+self.newline)
-        self.telnet.read_until("Password: ")
-        self.telnet.write(password+self.newline)
-        self.telnet.read_until(">")
-        self.telnet.write("cd FlashDisk/Best"+self.newline)
-        self.telnet.read_until("Best")
-    except Exception, e:
-        print e
-        #TODO
-
-
-  def send(self,command):
-    ""
-    self.telnet.write(command+self.newline)
-    return self.telnet.read_until("\>",3)
-
-  def close(self):
-    ""
-    self.telnet.write("exit"+self.newline)
-
-
+from common.configutils import *
 
 
 COMMAND={"HOME":"mohome",
@@ -46,7 +14,7 @@ COMMAND={"HOME":"mohome",
         }
 
 
-from best.common.sysutils import *
+from common.sysutils import *
 
 def scan_network(list):
     ""
