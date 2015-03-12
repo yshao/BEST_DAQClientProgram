@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SimpleDAQDialog</class>
+ <widget class="QDialog" name="SimpleDAQDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>258</width>
+    <height>192</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Simple DAQ Control</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="4" column="0" colspan="2">
+    <widget class="QTextBrowser" name="outLogBrowser"/>
+   </item>
+   <item row="1" column="1">
+    <widget class="QPushButton" name="inSend">
+     <property name="text">
+      <string>Send</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QPushButton" name="inDetect">
+     <property name="text">
+      <string>Detect</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QComboBox" name="inSendOpt">
+     <item>
+      <property name="text">
+       <string>HOME</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>FORWARD</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>STOP</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QPushButton" name="inStartDAQ">
+     <property name="text">
+      <string>Start DAQ</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QPushButton" name="inFtpSync">
+     <property name="text">
+      <string>FtpSync</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

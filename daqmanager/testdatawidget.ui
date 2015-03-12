@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TestDataWidget</class>
+ <widget class="QWidget" name="TestDataWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Test Data Widget</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QPushButton" name="inGetData">
+     <property name="text">
+      <string>GetData</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="inDecode">
+     <property name="text">
+      <string>Decode</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="inConvert">
+     <property name="text">
+      <string>Convert</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="inPlot">
+     <property name="text">
+      <string>Plot</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="outText">
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTextBrowser" name="outLogBrowser"/>
+   </item>
+   <item>
+    <widget class="QProgressBar" name="outPBar">
+     <property name="value">
+      <number>24</number>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
