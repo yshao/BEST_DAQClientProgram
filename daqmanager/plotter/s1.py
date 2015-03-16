@@ -1,9 +1,9 @@
-from best.common.sqliteutils import DaqDB
+from common.sqliteutils import DaqDB
 
 #init
 db=DaqDB("test.db")
 # db.create_table("data",['data'])
-from best.common.configutils import *
+from common.configutils import *
 
 from PyQt4 import QtCore
 

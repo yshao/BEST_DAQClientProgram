@@ -1,9 +1,11 @@
-from best.common.configutils import *
-from best.daqmanager.tasks.helpers.ftpmirror import *
-
-from PyQt4 import QtCore
 from multiprocessing import Process
 import Queue
+
+from PyQt4 import QtCore
+
+from common.configutils import *
+from best.daqmanager.tasks.helpers.ftpmirror import *
+
 
 ### Running tasks ###
 
@@ -41,7 +43,7 @@ class FtpSyncTask(QtCore.QThread):
         
 ### test setup ###        
 ### test ftp sync basic ###
-# from best.common.utils.configutil import *
+# from common.utils.configutil import *
 config=Config("../config.xml")
 login="test"
 passwd="test123"

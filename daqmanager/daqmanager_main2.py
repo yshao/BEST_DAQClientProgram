@@ -2,36 +2,28 @@
 import sip
 sip.setapi('QString', 2)
 import webbrowser
-import os
-import re
-import sys
-import threading
 from inspect import stack
-from threading import Thread
-from PyQt4 import QtCore, QtGui, QtXml
+from PyQt4 import QtCore, QtGui
 # from PyQt4.QtCore import QString
 
 ### ui files
 from ui_daqwindow import Ui_DAQManager
-from motorwidget import MotorWidget
-from controlwidget import ControlWidget
-from plotterwidget import PlotterWidget
-from daqwidget import DAQWidget
-from sensorwidget import SensorWidget
-from imuwidget import IMUWidget
-from radiometerwidget import RadiometerWidget
-from servicewidget import ServiceWidget
-from statuswidget import StatusWidget
+from daqmanager.gui.motorwidget import MotorWidget
+from daqmanager.gui.controlwidget import ControlWidget
+from daqmanager.gui.plotterwidget import PlotterWidget
+from daqmanager.gui.daqwidget import DAQWidget
+from daqmanager.gui.sensorwidget import SensorWidget
+from daqmanager.gui.imuwidget import IMUWidget
+from daqmanager.gui.radiometerwidget import RadiometerWidget
+from daqmanager.gui.servicewidget import ServiceWidget
+from daqmanager.gui.statuswidget import StatusWidget
 
-from motormonitorwidget import MotorMonitorWidget
+from daqmanager.gui.motormonitorwidget import MotorMonitorWidget
 from configeditor import ConfigEditor
 
-from best.common.utils import *
-from best.common.testutils import *
-from best.common.sqliteutils import *
-from best.common.configutils import *
-from best.common.fileutils import *
-from best.common.netutils import *
+from common.utils import *
+from common.fileutils import *
+from common.netutils import *
 
 
 ### py files
@@ -55,8 +47,6 @@ LOGGER=""
 # DAQMANAGER_HOME=os.environ['DAQMANAGER_HOME']
 
 # print DAQMANAGER_HOME
-
-from multiprocessing import Process, Queue
 
 class ClientLogger:
     def __init__(self,gui_logger):

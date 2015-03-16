@@ -2,22 +2,14 @@
 import sip
 sip.setapi('QString', 2)
 import webbrowser
-import os
-import re
-import sys
 import threading
 from inspect import stack
-from threading import Thread
-from PyQt4 import QtCore, QtGui, QtXml
+from PyQt4 import QtCore, QtGui
 ### ui files
 from ui_ftppbar import Ui_FtpSyncDialog
-from best.common.utils import *
-from best.common.testutils import *
-from best.common.sqliteutils import *
-from best.common.configutils import *
-from best.common.fileutils import *
-
-from datautils import *
+from common.utils import *
+from common.configutils import *
+from common.fileutils import *
 
 ### py files
 # from parser_inu import *

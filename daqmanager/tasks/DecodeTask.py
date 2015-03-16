@@ -1,9 +1,9 @@
 ### test parse with polling ###
-from best.daqmanager.dataparser import *
-from best.common.sqliteutils import *
-from best.common.configutils import *
-
 import os
+
+from best.daqmanager.dataparser import *
+from common.sqliteutils import *
+from common.configutils import *
 
 
 PYTHONPATH="c:/Users/Ping/Workspace"

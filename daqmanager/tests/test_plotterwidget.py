@@ -2,16 +2,10 @@
 import sip
 sip.setapi('QString', 2)
 
-from PyQt4 import QtCore, QtGui, QtXml
+from PyQt4 import QtGui
 from PyQt4.QtGui import QMainWindow
 ### ui files
-from best.daqmanager.plotterwidget import PlotterWidget
-from best.common.utils import *
-from best.common.testutils import *
-from best.common.sqliteutils import *
-from best.common.configutils import *
-from best.common.fileutils import *
-from best.common.guiutils import *
+from common.configutils import *
 
 from mpl import *
 

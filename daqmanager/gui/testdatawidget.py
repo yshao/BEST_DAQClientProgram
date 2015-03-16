@@ -1,23 +1,12 @@
 # This is only needed for Python v2 but is harmless for Python v3.
 import sip
 sip.setapi('QString', 2)
-import webbrowser
-import os
-import re
-import sys
-import threading
-from inspect import stack
-from threading import Thread
-from PyQt4 import QtCore, QtGui, QtXml
-from PyQt4.QtGui import QWidget
+from PyQt4 import QtGui
 ### ui files
 from ui_testdatawidget import Ui_TestDataWidget
 from common.utils import *
-from common.testutils import *
-from common.sqliteutils import *
 from common.configutils import *
 from common.fileutils import *
-from common.netutils import *
 
 ### py files
 # from parser_inu import *
@@ -40,7 +29,7 @@ DATA_DIR="c:/test_station/Demo/Data"
 # print DAQMANAGER_HOME
 
 from best.daqmanager.gui.mpl import mplWidget
-from PyQt4.QtCore import QObject, SIGNAL
+from PyQt4.QtCore import SIGNAL
 
 class TestDataWidget(QtGui.QWidget):
     ### connects widgets and signals ###

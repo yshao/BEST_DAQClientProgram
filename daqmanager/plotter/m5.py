@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from best.common.sqliteutils import DaqDB
+from common.sqliteutils import DaqDB
 
 df=pd.DataFrame()
 conn=DaqDB("../daq.db")

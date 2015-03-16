@@ -1,7 +1,7 @@
 import pandas as pd
 
-from best.common.guiutils import *
-from best.common.sqliteutils import *
+from common.guiutils import *
+from common.sqliteutils import *
 
 class ConvertDataTask(object):
     def __init__(self,db):
@@ -10,14 +10,6 @@ class ConvertDataTask(object):
     def perform(self):
         ""
 
-
-
-
-def interpolate_timescale():
-    ""
-    #TODO: rollover
-
-    #TODO:
 
 def convert_to_fullset(enc,rad,inu):
     db.insert_data(inu)

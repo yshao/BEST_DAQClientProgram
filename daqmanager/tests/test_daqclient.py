@@ -1,4 +1,4 @@
-from best.common.netutils import *
+from common.netutils import *
 from best.daqmanager.gui import *
 
 ### test daq command ###

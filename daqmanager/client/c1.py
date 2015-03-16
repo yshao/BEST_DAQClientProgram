@@ -1,4 +1,4 @@
-from best.common.netutils import *
+from common.netutils import *
 
 ### test motor
 # rad22IP="192.168.38.38"

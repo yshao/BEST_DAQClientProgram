@@ -1,7 +1,7 @@
-from best.common.sqliteutils import *
-from best.common.mathutils import *
-from best.common.configutils import *
-from best.common.fileutils import *
+from common.sqliteutils import *
+from common.mathutils import *
+from common.configutils import *
+from common.fileutils import *
 from parse_enc5 import *
 
 

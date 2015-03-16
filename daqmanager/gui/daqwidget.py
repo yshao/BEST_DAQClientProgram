@@ -2,22 +2,13 @@
 import sip
 sip.setapi('QString', 2)
 import webbrowser
-import os
-import re
-import sys
-import threading
-from inspect import stack
-from threading import Thread
-from PyQt4 import QtCore, QtGui, QtXml
+from PyQt4 import QtCore, QtGui
 ### ui files
 from ui_daqwidget import Ui_DAQWidget
 
 ### utils
 from common.utils import *
-from common.testutils import *
-from common.sqliteutils import *
 from common.configutils import *
-from common.fileutils import *
 
 from best.daqmanager.tasks.FtpSyncTask import FtpSyncTask
 from best.daqmanager.tasks.DecodeTask import DecodeTask
@@ -44,8 +35,6 @@ from best.daqmanager.tasks.DecodeTask import DecodeTask
 # DAQMANAGER_HOME=os.environ['DAQMANAGER_HOME']
 
 # print DAQMANAGER_HOME
-
-from multiprocessing import Process, Queue
 
 class ClientLogger:
     def __init__(self,gui_logger):

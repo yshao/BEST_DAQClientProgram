@@ -1,7 +1,7 @@
 import binascii
 import sys
 import struct
-from best.common.sqliteutils import *
+from common.sqliteutils import *
 
 
 # def usage():
