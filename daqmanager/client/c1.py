@@ -1,5 +1,9 @@
 from common.netutils import *
 
+### check network ###
+
+
+
 ### test motor
 # rad22IP="192.168.38.38"
 # t=TelnetClient(rad22IP)

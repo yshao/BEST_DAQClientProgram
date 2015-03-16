@@ -17,7 +17,9 @@ class Env():
         kdb=self.param['HOME']+'/common/resource/daq.kdb'
         parser = IniParser()
         parser.read(config)
+        d={}
         d=parser.as_dict()['config']
+        d['radiometer']=parser.as_dict()['radiometer']
 
         d2=self._get_passwords(kdb)
 
