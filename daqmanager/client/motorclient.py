@@ -20,6 +20,7 @@ class MotorClient():
 
 
     def motor_send_cmd(self,cmd):
+        ""
 
         self.client.send('serialport %s' %cmd)
 
