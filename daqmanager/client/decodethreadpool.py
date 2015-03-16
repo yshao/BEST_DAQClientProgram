@@ -1,93 +1,99 @@
 import glob
-import os
 
 __company__ = 'Boulder Environmental Sciences and Technology'
 __project__ = ''
 __author__ = 'Y. Shao'
-__created__ = '3/16/2015' '12:18 PM'
+__created__ = '3/16/2015' '2:45 PM'
 
-import multiprocessing as mp
-import time
+from multiprocessing import Pool
+from functools import partial
+import os
 from common.env import Env
-
-        ### scheduler ###
-        # self.scheduler=schedule.Scheduler()
-        # self.scheduler.every(cfg['update_interval']).minutes.do(self.start)
-
+from mputils import mp_reg
 
 def decode_enc(f):
-    print f
+    l=''
+    return l
 
 def decode_imu(f):
-    print f
+    l=''
+    return l
 
 def decode_rad(f):
-    print f
+    l=''
+    return l
 
-
-class DecodeThreadPool():
+class DecodeProcess(object):
     def __init__(self,ips):
-        ""
+        self.l=[]
 
         cfg=Env().getConfig()
+        # print ips
+
+        self.ips=ips
+        self.pwd=cfg['praco_password']
+        self.user=cfg['praco_username']
         self.local=cfg['local_dir']
-        # self.folders=glob.glob('%s/**/' % cfg['local_dir'])
-        fdr=[]
+
+        fdr={}
         for k in ips.keys():
             lfdr=k+'_'+ips[k].replace('.','_')
-            lfdr=self.local+'/'+fdr
-            fdr.append(lfdr)
+            lfdr=self.local+'/'+lfdr
+            print lfdr,k
+            fdr[k]=lfdr
 
         self.folders=fdr
 
-        print 'found ' + self.folders
-
-    def decodethread(self,folder):
-        # ips=self.ips
-        # ips=self.ips
-        # user=self.user
-        # pwd=user.pwd
+    def decodethread(self, ipk):
+        ips=self.ips
+        user=self.user
+        pwd=self.pwd
         ### move files into folders ###
 
-        print "decoding from %s" % folder
-        for f in glob.glob(folder+'/**'):
+
+
+        total_res=[]
+        ldr=self.folders[ipk]
+        ip=self.ips[ipk]
+        if not os.path.exists(ldr):
+            os.makedirs(ldr)
+
+        print "decoding from %s" % ldr
+        res=[]
+        for f in glob.glob(ldr+'/**'):
+            print 'file %s' % f
             filen=os.path.basename(f)
-            ftype=filen[:3]
+            ftype=filen[-3:]
             if ftype == 'enc':
-                decode_enc(f)
+                res=decode_enc(f)
             elif ftype == 'arc':
-                decode_imu(f)
+                res=decode_imu(f)
             elif ftype == 'rad':
-                decode_rad(f)
+                res=decode_rad(f)
 
-        # with ftputil.FTPHost(ip, user, pwd) as host:
-        #     names = host.listdir(host.curdir)
-        #     for name in names:
-        #         if host.path.isfile(name):
-        #             # Remote name, local name, binary mode
-        #             host.download(name, name)
-        #
-        #     l=[]
-        #     return len(l)
+            print filen
+            print ftype
 
-    result_list = []
-    def log_result(self,result):
-        # This is called whenever foo_pool(i) returns a result.
-        # result_list is modified only by the main process, not the pool workers.
-        print "files decoded %s" % result
-        self.result_list.append(result)
+        total_res=total_res+[res]
+        # print res
+        # return len(l)
+        return total_res
 
-    def start(self):
-        pool = mp.Pool()
-        folders=self.folders
-        for fdr in folders:
-            print "decoding %s" % fdr
-            pool.apply_async(self.decodethread,args=(fdr,),callback=self.log_result)
+    def go(self):
+        pool = Pool()
+        ips=self.ips
 
-        pool.close()
-        pool.join()
-        print(self.result_list)
+        res=pool.map(self.decodethread, ips)
+        return res
 
+def run_decodepool(d):
+    ### pickle instance
+    mp_reg()
+    # p=Pool()
+    d.keys()
+
+    p=DecodeProcess(d)
+    print p.go()
 
 if __name__ == '__main__':
     cfg=Env().getConfig()
@@ -97,6 +103,8 @@ if __name__ == '__main__':
         if k in l:
             d[k]=v
 
-    ips=d
-    pool=DecodeThreadPool(ips)
-    pool.start()
+    for k,v in cfg['radiometer'].items():
+        if k in l:
+            d[k]=v
+
+    run_decodepool(d)

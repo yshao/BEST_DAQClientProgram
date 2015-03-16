@@ -2,11 +2,11 @@ import os
 from keepass import kpdb
 from keepass.kpdb import Database
 from common.iniconfig import IniParser
-from common.jsonconfig import JsonConfig
+# from common.jsonconfig import JsonConfig
 
 
 class Env():
-    param={'HOME':'c:/Users/Ping/Workspace/best'}
+    param={'HOME':'c:/Users/Ping/Code/best/daqclient1'}
 
     def __init__(self):
         ""
@@ -14,12 +14,16 @@ class Env():
         # self.init_from_os()
 
         config=self.param['HOME']+'/common/config.ini'
-        kdb=self.param['HOME']+'/common/resource/daq.kdb'
+        # print config
+        kdb=self.param['HOME']+'/common/resources/daq.kdb'
         parser = IniParser()
         parser.read(config)
+        # pd={}
+        pd=parser.as_dict()
+        # print pd
         d={}
-        d=parser.as_dict()['config']
-        d['radiometer']=parser.as_dict()['radiometer']
+        d=pd['base']
+        d['radiometer']=pd['radiometer']
 
         d2=self._get_passwords(kdb)
 
