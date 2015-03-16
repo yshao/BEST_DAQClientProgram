@@ -11,38 +11,28 @@ from common.env import Env
 
 
 class FtpThreadPool():
-    def __init__(self,iplist):
+    def __init__(self,ips):
         ""
 
         cfg=Env().getConfig()
-        ips=[]
-        for ip in iplist:
-            ips.append(cfg[ip])
+        # ips=[]
+        # for ip in iplist:
+        #     ips.append(cfg[ip])
 
         self.ips=ips
-
-        # d={}
-        # for k in cfg.keys():
-        #     if k[-2:] == 'ip':
-        #         name=k[:-3]
-        #         d[k]={}
-        #         d[k]['ip']=cfg[k]
-        #         d[k]['folder']=name
-
-        # ips
 
         self.pwd=cfg['praco_password']
         self.user=cfg['praco_username']
         self.local=cfg['local_dir']
 
-    def ftpthread(self,ip):
+    def ftpthread(self,ipk):
         ips=self.ips
         user=self.user
         pwd=user.pwd
         ### move files into folders ###
-        # for idx,ip in enumerate(ips):
-        print "transferring from %s" % ip
-        with ftputil.FTPHost(ip, user, pwd) as host:
+        fdr=ipk+'_'+ips[ipk].replace('.','_')
+        print "transferring from %s" % ipk
+        with ftputil.FTPHost(ips[ipk], user, pwd) as host:
             names = host.listdir(host.curdir)
             for name in names:
                 if host.path.isfile(name):
@@ -61,12 +51,14 @@ class FtpThreadPool():
 
     def start(self):
         pool = mp.Pool()
-        ips=self.ips
-        for ip in ips:
-            print "transferring from %s" % ip
+        ips=self.ipsd
+
+
+        for k in ips.keys():
+            # print "transferring from %s %s" % (k,ips[k])
             # pool.apply_async(foo_pool, args = (i, ), callback = log_result)
             # ftpthread=FtpThread()
-            pool.apply_async(self.ftpthread,args=(ip,),callback=self.log_result)
+            pool.apply_async(self.ftpthread,args=(k,),callback=self.log_result)
         pool.close()
         pool.join()
         print(self.result_list)
@@ -74,6 +66,12 @@ class FtpThreadPool():
 
 if __name__ == '__main__':
     cfg=Env().getConfig()
+    d={}
+    l=['archival_ip','encoder_ip','rad33_ip']
+    for k,v in cfg.items():
+        if k in l:
+            d[k]=v
 
-    ips=[cfg['archival_ip'],['encoder_ip']]
+    ips=d
     ftppool=FtpThreadPool(ips)
+    ftppool.start()
