@@ -105,8 +105,8 @@ def ftp_upload(ip,user,pwd):
 
 if __name__ == '__main__':
     cfg=Env().getConfig()
-    ftp_delete(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
-    ftp_delete(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'])
+    # ftp_delete(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
+    # ftp_delete(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'])
     # ftp_download(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
     print ftp_list(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
     print ftp_list(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'])
