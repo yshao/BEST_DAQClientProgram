@@ -80,8 +80,6 @@ class DecodeProcess(object):
 
         print res
         total_res=total_res+[res]
-        # print res
-        # return len(l)
         return total_res
 
     def go(self):
@@ -94,7 +92,6 @@ class DecodeProcess(object):
 def run_decodepool(d,rel_p):
     ### pickle instance
     mp_reg()
-    # p=Pool()
     d.keys()
 
     p=DecodeProcess(d,rel_p)

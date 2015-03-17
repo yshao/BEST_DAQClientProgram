@@ -9,15 +9,33 @@ __project__ = ''
 __author__ = 'Y. Shao'
 __created__ = '3/17/2015' '10:02 AM'
 
+def epoch_to_tm(epoch):
+    ""
+    print epoch
+    return time.strftime("%Y%m%d %H:%M:%S %p",time.gmtime(epoch))
+
+def daqtm_to_epoch(tm):
+    ""
+    # print tm
+    filen=os.path.basename(tm)
+
+    filen=filen[:-4]
+    pattern='%Y%m%d_%H%M%S'
+    # print filen
+    print 'Y',filen
+    epoch = int(time.mktime(time.strptime(filen, pattern)))
+    return epoch
+
+
 def tm_to_epoch(dt):
     pattern='%Y%m%d %H:%M:%S %p'
-    # tm=time.strptime(,dt)
+    print dt
     epoch = int(time.mktime(time.strptime(dt, pattern)))
+    print epoch
     return epoch
 
 
 def get_localtime():
-    # print datetime.datetime.now()
     tm=datetime.datetime.now().timetuple()
     return time.strftime("%Y%m%d %H:%M:%S %p",tm)
 
