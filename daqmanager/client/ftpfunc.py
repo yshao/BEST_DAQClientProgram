@@ -147,3 +147,10 @@ if __name__ == '__main__':
     print ftp_list(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'])
     # ftp_delete(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
     # print ftp_list(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
+
+
+def daqtm_to_epoch(tm):
+    ""
+    filen=os.path.basename(tm)
+    filen=filen[-4:]
+    filen,'%y%m%d_%H%M%S')

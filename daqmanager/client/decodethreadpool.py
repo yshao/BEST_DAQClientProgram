@@ -12,19 +12,25 @@ from common.env import Env
 from mputils import mp_reg
 
 def decode_enc(f):
-    l=''
+    print 'decode %s' % f
+    num_r='1000'
+    l='records %s' % num_r
     return l
 
 def decode_imu(f):
-    l=''
+    print 'decode %s' % f
+    num_r='1003'
+    l='records %s' % num_r
     return l
 
 def decode_rad(f):
-    l=''
+    print 'decode %s' % f
+    num_r='1001'
+    l='records %s' % num_r
     return l
 
 class DecodeProcess(object):
-    def __init__(self,ips):
+    def __init__(self,ips,fdr):
         self.l=[]
 
         cfg=Env().getConfig()
@@ -33,7 +39,7 @@ class DecodeProcess(object):
         self.ips=ips
         self.pwd=cfg['praco_password']
         self.user=cfg['praco_username']
-        self.local=cfg['local_dir']
+        self.local='%s/%s' %(cfg['local_dir'],fdr)
 
         fdr={}
         for k in ips.keys():
@@ -43,6 +49,7 @@ class DecodeProcess(object):
             fdr[k]=lfdr
 
         self.folders=fdr
+        print self.local
 
     def decodethread(self, ipk):
         ips=self.ips
@@ -59,21 +66,19 @@ class DecodeProcess(object):
             os.makedirs(ldr)
 
         print "decoding from %s" % ldr
+        # print glob.glob(ldr+'/*')
         res=[]
         for f in glob.glob(ldr+'/**'):
-            print 'file %s' % f
             filen=os.path.basename(f)
             ftype=filen[-3:]
             if ftype == 'enc':
                 res=decode_enc(f)
-            elif ftype == 'arc':
+            elif ftype == 'imu':
                 res=decode_imu(f)
             elif ftype == 'rad':
                 res=decode_rad(f)
 
-            print filen
-            print ftype
-
+        print res
         total_res=total_res+[res]
         # print res
         # return len(l)
@@ -86,13 +91,13 @@ class DecodeProcess(object):
         res=pool.map(self.decodethread, ips)
         return res
 
-def run_decodepool(d):
+def run_decodepool(d,rel_p):
     ### pickle instance
     mp_reg()
     # p=Pool()
     d.keys()
 
-    p=DecodeProcess(d)
+    p=DecodeProcess(d,rel_p)
     print p.go()
 
 if __name__ == '__main__':
@@ -107,4 +112,4 @@ if __name__ == '__main__':
         if k in l:
             d[k]=v
 
-    run_decodepool(d)
+    run_decodepool(d,'1426610475')

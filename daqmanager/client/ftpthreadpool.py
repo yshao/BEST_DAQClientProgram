@@ -5,7 +5,7 @@ from common.env import Env
 from mputils import mp_reg
 
 class FtpProcess(object):
-    def __init__(self,ips):
+    def __init__(self,ips,rel_fdr):
         self.l=[]
 
         cfg=Env().getConfig()
@@ -14,7 +14,7 @@ class FtpProcess(object):
         self.ips=ips
         self.pwd=cfg['praco_password']
         self.user=cfg['praco_username']
-        self.local=cfg['local_dir']
+        self.local='%s/%s' %(cfg['local_dir'],rel_fdr)
 
         fdr={}
         for k in ips.keys():
@@ -59,13 +59,13 @@ class FtpProcess(object):
         res=pool.map(self.ftpthread, ips)
         return res
 
-def run_ftppool(d):
+def run_ftppool(d,rel_p):
     ### pickle instance
     mp_reg()
     # p=Pool()
     d.keys()
 
-    p=FtpProcess(d)
+    p=FtpProcess(d,rel_p)
     print p.go()
 
 if __name__ == '__main__':
@@ -80,4 +80,4 @@ if __name__ == '__main__':
         if k in l:
             d[k]=v
 
-    run_ftppool(d)
+    run_ftppool(d,'1426610475')

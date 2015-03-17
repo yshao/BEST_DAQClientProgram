@@ -1,6 +1,7 @@
 import telnetlib
 from common.env import Env
 from common.sysutils import run_command
+from daqmanager.client.utils import p_mname, tm_to_epoch
 
 
 class TelnetClient(object):
@@ -32,9 +33,23 @@ class TelnetClient(object):
     return self.telnet.read_until("\>",3)
 
   def sync_time(self):
-      self.telnet.write('Winsocket'+self.newline)
-      run_command('wintime')
-      self.telnet.read_until("\>",3)
+      self.telnet.write('DAQclk_test'+self.newline)
+      run_command('WinsockClient')
+      try:
+        self.telnet.read_until("\>",3)
+        return True
+      except Exception,e:
+        print '%s' % e,p_mname()
+        # pass
+        return False
+
+  def sync_mock(self):
+      tm=tm_to_epoch()
+      fh=open(tm,'wb')
+
+
+  def run_daq(self):
+      ""
 
 
   def close(self):
