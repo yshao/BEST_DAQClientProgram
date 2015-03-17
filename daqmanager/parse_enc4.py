@@ -3,6 +3,7 @@
 
 import sys
 import struct
+from parser.datautils import SH_temp_conversion, SH_humidity_conversion
 from common.sqliteutils import *
 from datautils import *
 
@@ -346,6 +347,11 @@ cal_fmt="".join(CAL_FORMAT_LIST)
 CAL_BUFFER_SIZE= struct.calcsize(cal_fmt)
 
 db=DaqDB("daq.db")
+
+
+class MS5803_convert(object):
+    pass
+
 
 def main():
   file_index=-1

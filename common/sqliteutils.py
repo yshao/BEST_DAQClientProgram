@@ -20,6 +20,9 @@ def convert_timestamp(systemtime):
 
 class DaqDB(object):
 
+    def __del__(self):
+        self.connection.cursor()
+
     def __init__(self, filename):
         # sqlite doesn't know how to handle certain numpy types unless told
         sqlite3.register_adapter(np.int8, bool)
@@ -35,10 +38,12 @@ class DaqDB(object):
 
         self.connection.text_factory = str
         self.cursor = self.connection.cursor()
-        # self.optimise_inserts()
+        self.optimise_inserts()
+        # self.insert_init()
 
-    def __del__(self):
-        self.connection.close()
+
+    # def __del__(self):
+    #     self.connection.close()
 
     def get_connection(self):
         return self.connection
@@ -55,6 +60,7 @@ class DaqDB(object):
         self.cursor.execute('PRAGMA journal_mode=MEMORY')
         self.cursor.execute('PRAGMA temp_store=MEMORY')
         self.cursor.execute('PRAGMA locking_mode=EXCLUSIVE')
+        # self.cursor.execute('PRAGMA journal_mode=WAL')
 
     def create_table(self, name, columns):
         coldef = "('"+"', '".join(columns)+"')"
@@ -112,8 +118,8 @@ class DaqDB(object):
             query = 'INSERT INTO '+table+' (%s) VALUES (%s)' % (columns, placeholders)
             self.cursor.execute(query, my_dict)
 
-    def check_avail(self):
-        return True
+    # def check_avail(self):
+    #     return True
 
 
     # def update_joins(self):
@@ -136,158 +142,22 @@ class DaqDB(object):
     def load_pd_data(self,stmt):
         return pd.read_sql(stmt,self.connection)
 
+    def close(self):
+        self.connection.close
 
-    def load_data(self,table):
-        ""
-        stmt="SELECT * from %s" % table
-        print stmt
-        rs=self.cursor.execute(stmt)
-        dr=rs.fetchall()
-
-        # rs = curs.execute(sql) #Send SQL-syntax to cursor
-        # recs = rs.fetchall()  # All data are stored in recs
-        # late fix for xy-plots
-        format_rad = [('ch1_1', float), ('ch2_1', float),('ch3_1', float), ('ch4_1', float),
-                  ('ch5_1', float), ('ch6_1', float),('ch7_1', float), ('ch8_1', float),
-                  ('ch9_1', float), ('ch10_1', float),('ch11_1', float), ('ch12_1', float),
-                  ('hKey_1', str),
-                  ('ch1_2', float), ('ch2_2', float),('ch3_2', float), ('ch4_2', float),
-                  ('ch5_2', float), ('ch6_2', float),('ch7_2', float), ('ch8_2', float),
-                  ('ch9_2', float), ('ch10_2', float),('ch11_2', float), ('ch12_2', float),
-                  ('hKey_2', str),
-                  ('counter', long), ('temp', float),('wIdx', long), ('rIdx', long),
-                  ('tailsymb', str), ('file_index', int),('timestamp', str), ('packet_len', int),
-                  ]#define a format for xy-plot (to use if not datetime on x-axis)
-
-        format_rad = (float,float,float,float,float,float,float,float,float,float,float,float,str,
-                      float,float,float,float,float,float,float,float,float,float,float,float,str,
-                      long,float,long,long,str,int,str,int)
-
-        format_enc = [('c1_a1', float), ('c1_a3', float),('c1_a4', float), ('c1_a5', float),
-                  ('c1_a6', float), ('c1_a7', float),('c1_a8', float), ('c1_a9', float),
-                  ('c1_aA', float), ('c1_aD', float),('c1_aE', float), ('c1_aF', float),
-
-                  ('c2_a1', float), ('c2_a3', float),('c2_a4', float), ('c2_a5', float),
-                  ('c2_a6', float), ('c2_a7', float),('c2_a8', float), ('c2_a9', float),
-                  ('c2_aA', float), ('c2_aD', float),('c2_aE', float), ('c2_aF', float),
-
-                  ('c3_a1', float), ('c3_a3', float),('c3_a4', float), ('c3_a5', float),
-                  ('c3_a6', float), ('c3_a7', float),('c3_a8', float), ('c3_a9', float),
-                  ('c3_aA', float),
-
-                  ('c4_a4', float), ('c4_a3', float),('c4_aE', float), ('c4_a5', float),
-                  ('c4_a8', float), ('c2_a9', float),('c2_aF', float),
-
-                  ('c5_a4', float), ('c5_a5', float), ('c5_aD', float), ('c5_aE'),
-
-                  ('c6_a5', float), ('c6_a4', float), ('c5_aE', float), ('c5_aD'),
-
-                  ('c7_a4', float), ('c7_a5', float),('c7_aE', float), ('c7_aD', float),
-
-                  ('encoder_counter', long), ('mo1', int),('mo2', int),
-
-                  ('counter', long), ('wIdx', long), ('rIdx', long), ('tailsymb', str),
-
-                  ('file_index', int), ('timestamp', str), ('packet_len', int)
-
-                  ]#define a format for xy-plot (to use if not datetime on x-axis)
-
-        #Transform data to a numpy.recarray
-        # dtable=
-        # dtable=np.array()
-
-        # for row in dr:
-        #     print row
-
-        a=[(192,192,2.5),(200,200,1.5),(200,200,1.5)]
-        a1= [list(elem) for elem in a]
-        af=[('a',int),('b',int),('c',float)]
-        bf=[(int,int,float)]
-
-        b=[list(i1) for i1 in a1]
-
-        # na=np.array(b,dtype=af)
-        # na=np.array(b)
-        # print na.shape
-
-        a1= [list(elem) for elem in dr]
-        na=np.array(a1)
-        print na.shape
-
-
-        # try:
-        #     if table == 'rad':
-        #         # dtable = np.asarray(dr, dtype=format_rad)  #NDARRAY
-        #         # for row in len(dr):
-        #             # dtable.append(row)
-        #     elif table == 'enc':
-        #         # dtable = np.array(dr, dtype=format_enc)  #NDARRAY
-        #
-        #
-        #     # dtable.reshape(2,2,4)
-        #
-        # except Exception,e:
-        #   print "error: "+ str(e)
-
-
-        return na
+    def dump_tables(self):
+        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        print(self.cursor.fetchall())
 
 
 def create_db_light(table,cols):
-    """Running cost: 91m22.244s (6 Nov 2013)"""
+    ""
     print "creating table %s" % table
     print "creating columns %s" % cols
 
     db = DaqDB('daq.db')
     db.optimise_inserts()
     db.create_table(table, cols)
-    # for filename in np.sort(glob.glob(os.path.join(constants.DESTINATION, '*.enc'))):
-    #     db.insert_raw(filename, cols)
-    # db.create_indexes()
-    db.commit()
-
-def create_db_full():
-    """Creates iphas-dr2-full.db
-
-    Running cost: about 10 hours?
-    """
-    cols = ['name', 'ra', 'dec',
-            'sourceID', 'posErr', 'l', 'b',
-            'mergedClass', 'mergedClassStat', 
-            'pStar', 'pGalaxy', 'pNoise',
-            'pSaturated', 'rmi', 'rmha',
-            'r', 'rErr', 'rPeakMag', 'rPeakMagErr',
-            'rAperMag1', 'rAperMag1Err', 'rAperMag3', 'rAperMag3Err',
-            'rGauSig', 'rEll', 'rPA', 'rClass', 'rClassStat',
-            'rErrBits', 'rMJD', 'rSeeing', 'rDetectionID',
-            'rX', 'rY',
-            'i', 'iErr', 'iPeakMag', 'iPeakMagErr',
-            'iAperMag1', 'iAperMag1Err', 'iAperMag3', 'iAperMag3Err',
-            'iGauSig', 'iEll', 'iPA', 'iClass', 'iClassStat',
-            'iErrBits', 'iMJD', 'iSeeing', 'iDetectionID',
-            'iX', 'iY', 'iXi', 'iEta',
-            'ha', 'haErr', 'haPeakMag', 'haPeakMagErr',
-            'haAperMag1', 'haAperMag1Err', 'haAperMag3', 'haAperMag3Err',
-            'haGauSig', 'haEll', 'haPA', 'haClass', 'haClassStat',
-            'haErrBits', 'haMJD', 'haSeeing', 'haDetectionID',
-            'haX', 'haY', 'haXi', 'haEta',
-            'brightNeighb', 'deblend', 'saturated', 'errBits',
-            'nBands', 'reliable', 'fieldID', 'fieldGrade',
-            'night', 'seeing', 'ccd', 'nObs', 'sourceID2',
-            'fieldID2', 'r2', 'rErr2', 'i2', 'iErr2', 'ha2', 'haErr2',
-            'errBits2']
-    #db = SurveyDB('/home/gb/tmp/test.db')
-    # db = DaqDB(os.path.join(constants.DESTINATION, 'iphas-dr2-full.db'))
-    db = DaqDB(os.path.join('daq-full.db'))
-    db.optimise_inserts()
-    db.create_table('iphas', cols)
-    # files_to_insert = glob.glob(os.path.join(constants.PATH_CONCATENATED, 'full', '*.fits'))
-    files_to_insert = glob.glob(os.path.join('full', '*.fits'))
-    #files_to_insert = glob.glob(os.path.join(constants.PATH_CONCATENATED, 'full', '*215b.fits'))
-    for filename in np.sort(files_to_insert):
-        db.insert_fits(filename, cols)
-    db.commit()
-    db.create_indexes()
     db.commit()
 
 
@@ -311,7 +181,7 @@ def create_db_full():
 
 INU_COL = ['pre','bid','mid','len',
         'accx', 'accy', 'accz', 'magx', 'magy', 'magz', 'gyrx', 'gyry', 'gyrz', 'temp',
-        'Press','bPrs','LAT','LON','ALT','VEL_N','VEL_E','VEL_D',
+        'Press','bPrs','ITOW','LAT','LON','ALT','VEL_N','VEL_E','VEL_D',
         'Hacc','Vacc','Sacc','bGPS','TS','Status','CS',
         'counter','wIdx','rIdx','tailsymb',
         'file_index','timestamp','packet_len'
@@ -324,24 +194,32 @@ RAD_COL = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8','ch9','ch10','ch11','
         'file_index','timestamp','packet_len'
        ]
 
+GPS_COL = ['pps','counter']
+
+
+
+
 ENC_COL = ['c1_s1','c1_s2','c1_s3','c1_s4','c1_s5','c1_s6',
         'c2_s1','c2_s2','c2_s3','c2_s4','c2_s5','c2_s6',
         'c3_s1','c3_s2','c3_s3','c3_s4','c3_s5','c3_s6',
         'c4_s1','c4_s2','c4_s3','c4_s4','c4_s5','c4_s6',
         'c5_s1','c5_s2','c5_s3','c5_s4','c5_s5','c5_s6',
         'c6_s1','c6_s2','c6_s3','c6_s4','c6_s5','c6_s6',
-                                        'c7_s5','c7_s6',
+                                'c8_s4','c8_s5',
+        'mo1','mo2','encoder_counter',
+        'counter','temp','wIdx','rIdx','tailsymb',
+        'file_index','timestamp','packet_len'
         ]
 ### Session Table ###
 SESSION_COL = [
-    'session_index',
-    'starting time',
-    'end time',
-    'file index',
-    'file name',
-    'filesize',
-    'folder name',
-    'records_uploaded','records_rejected',
+    'sessionIdx',
+    'startingTime',
+    'endTime',
+    'fileIndex',
+    'fileName',
+    'fileSize',
+    'folderName',
+    'recordsUploaded','recordsRejected',
 ]
 
 ENC_INIT_COL = ['c1_c1','c1_c2','c1_c3','c1_c4','c1_c5','c1_c6',
@@ -351,6 +229,14 @@ ENC_INIT_COL = ['c1_c1','c1_c2','c1_c3','c1_c4','c1_c5','c1_c6',
         'c5_c1','c5_c2','c5_c3','c5_c4','c5_c5','c5_c6',
         'c6_c1','c6_c2','c6_c3','c6_c4','c6_c5','c6_c6'
         ]
+
+
+### Parser Diagnostics Table ###
+DECODER_COL = ['file_name','file_index','bIdx','packet_len'
+
+
+
+]
 
 
 ### Converted Level 1 Table ###
@@ -383,57 +269,63 @@ DATA_COL = [
     'cunter','time',
     ]
 
+
+    ### init
+def insert_init():
+    db=DaqDB("daq.db")
+
+    init = {
+    'c1_c1':40695,'c1_c2':35411,'c1_c3':23713,'c1_c4':21714,'c1_c5':32532,'c1_c6':28824,
+
+    'c2_c1':40200,'c2_c2':37500,    'c2_c3':23808,'c2_c4':23527,'c2_c5':31353,'c2_c6':28666,
+
+    'c3_c1':40709,'c3_c2':36913,'c3_c3':23830,'c3_c4':23599,'c3_c5':30841,'c3_c6':28764,
+    'c4_c1':40439,'c4_c2':36650,'c4_c3':23486,'c4_c4':22888,'c4_c5':31176,'c4_c6':28619,
+    'c5_c1':40771,'c5_c2':38839,'c5_c3':23726,'c5_c4':24670,'c5_c5':30772 ,'c5_c6':28618,
+    'c6_c1':41095,'c6_c2':36757,'c6_c3':23869,'c6_c4':22635,'c6_c5':32139,'c6_c6':28734
+    }
+
+    for key in init:
+            print key
+            init[key] = str(init[key])
+
+    db.insert_dict('calib',init)
+    db.commit()
+
+
+def create_full():
+    create_db_light("inu",INU_COL)
+    create_db_light("gps",GPS_COL)
+    create_db_light("rad",RAD_COL)
+    create_db_light("enc",ENC_COL)
+    create_db_light("calib",ENC_INIT_COL)
+    create_db_light("session",SESSION_COL)
+    create_db_light("decoder",DECODER_COL)
+    insert_init()
+
+
+    sl.move(DB_NAME,os.path.join(DB_DIR,DB_NAME))
+    src=os.path.join(DB_DIR,DB_NAME)
+    sl.copy(src,os.path.join(DB_DIR,"enc.db"))
+    sl.copy(src,os.path.join(DB_DIR,"rad.db"))
+    sl.copy(src,os.path.join(DB_DIR,"inu.db"))
+    print os.path.join(DB_DIR,DB_NAME)
+
 if __name__ == '__main__':
     # generate tables
 # def create_db():
     # sl.rename(os.path.join(DB_DIR,DB_NAME),os.path.join(DB_DIR,DB_NAME+".bk"))
 
-    create_db_light("inu",INU_COL)
-
-    # cols = ['ch1_1','ch2_1','ch3_1','ch4_1','ch5_1','ch6_1','ch7_1','ch8_1','ch9_1','ch10_1','ch11_1','ch12_1','hKey_1',
-    #         'ch1_2','ch2_2','ch3_2','ch4_2','ch5_2','ch6_2','ch7_2','ch8_2','ch9_2','ch10_2','ch11_2','ch12_2','hKey_2',
-    #         'counter','temp','wIdx','rIdx','tailsymb',
-    #         'file_index','timestamp','packet_len'
-    #        ]
-    # create_db_light("rad",cols)
-
-
-    create_db_light("rad",RAD_COL)
-
-    # cols = ['c1_a1','c1_a3','c1_a4','c1_a5','c1_a6','c1_a7','c1_a8','c1_a9','c1_aA','c1_aD','c1_aE','c1_aF',
-    #       'c2_a1','c2_a3','c2_a4','c2_a5','c2_a6','c2_a7','c2_a8','c2_a9','c2_aA','c2_aD','c2_aE','c2_aF',
-    #       'c3_a1','c3_a3','c3_a4','c3_a5','c3_a6','c3_a7','c3_a8','c3_a9','c3_aA',
-    #       'c4_a4','c4_a3','c4_aE','c4_a5',                'c4_a8','c4_a9',                        'c4_aF',
-    #                       'c5_a4','c5_a5',                                        'c5_aD','c5_aE',
-    #       'c6_a5','c6_a4','c6_aE',                                                'c6_aD',
-    #       'c7_a4','c7_a5','c7_aE',                                                'c7_aD',
-    #       'encoder_counter','mo1','mo2','counter','wIdx','rIdx','tailsymb',
-    #       'file_index','timestamp','packet_len'
-    #         ]
-    # create_db_light("enc",cols)
-
-    # cols = ['c1_a1','c1_a3','c1_a4','c1_a5','c1_a6','c1_a7','c1_a8','c1_a9','c1_aA','c1_aD','c1_aE','c1_aF',
-    #       'c2_a1','c2_a3','c2_a4','c2_a5','c2_a6','c2_a7','c2_a8','c2_a9','c2_aA','c2_aD','c2_aE','c2_aF',
-    #       'c3_a1','c3_a3','c3_a4','c3_a5','c3_a6','c3_a7','c3_a8','c3_a9','c3_aA',
-    #       'c4_a1','c4_a3','c4_aE','c4_a5','c4_a6','c4_a7','c4_a8','c4_a9',
-    #       'c5_a1','c5_a3','c5_a4','c5_a5','c5_a6','c5_a7','c5_a8','c5_a9',        'c5_aD','c5_aE',
-    #       'c6_a1','c6_a3','c6_a4','c6_a5','c6_a6','c6_a7','c6_a8','c6_a9',                                                'c6_aD',
-    #       'encoder_counter','mo1','mo2','counter','wIdx','rIdx','tailsymb',
-    #       'file_index','timestamp','packet_len'
-    #         ]
-    # create_db_light("enc",cols)
-
-    create_db_light("enc",ENC_COL)
-
-    create_db_light("calib",ENC_INIT_COL)
-
-
-    create_db_light("session",SESSION_COL)
-
-    create_db_light("converted",DATA_COL)
+    create_full()
 
 
 
 
-    sl.move(DB_NAME,os.path.join(DB_DIR,DB_NAME))
-    print os.path.join(DB_DIR,DB_NAME)
+    # sl.move(DB_NAME,os.path.join(DB_DIR,DB_NAME))
+    # src=os.path.join(DB_DIR,DB_NAME)
+    # sl.copy(src,os.path.join(DB_DIR,"enc.db"))
+    # sl.copy(src,os.path.join(DB_DIR,"rad.db"))
+    # sl.copy(src,os.path.join(DB_DIR,"inu.db"))
+    # print os.path.join(DB_DIR,DB_NAME)
+
+
