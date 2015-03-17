@@ -9,11 +9,47 @@ class FtpClient(object):
     def __init__(self,host_url,username,password):
         ""
         self.ftp=ftplib.FTP(host_url,username,password)
-        username = username + self.newline
-        password = username + self.newline
+        # username = username + self.newline
+        # password = username + self.newline
+        self.path='/FlashDisk/Data'
+        self.ftp.chdir("/FlashDisk/Data")
 
-        self.ftp.chdir("C:\\FlashDisk\\Data")
+    def list(self):
+        data=[]
+        self.ftp.dir(data.append)
 
+        fl=[]
+        for line in data:
+            # print "-", line
+            fl.append(re.split(' *',line)[3])
+
+        return data
+
+    def show_list(self):
+        data=[]
+        self.ftp.dir(data.append)
+
+        fl=[]
+        for line in data:
+            print "-", line
+            # fl.append(re.split(' *',line)[3])
+
+        # return data
+
+    def ftp_download(self,local_dir):
+        fl=self.list
+
+        for f in fl:
+            # print f
+            with open('%s/%s'%(local_dir,f),'wb') as fh:
+                print 'RETR %s/%s' % (self.path,f)
+                self.ftp.retrbinary('RETR %s/%s' % (self.path,f), fh.write)
+
+        # ftp.quit()
+        return fl
+
+    def close(self):
+        self.ftp.quit()
 
 
 
@@ -37,7 +73,6 @@ def ftp_download(ip,user,pwd):
         with open('%s/%s'%(local_dir,f),'wb') as fh:
             print 'RETR %s/%s' % (path,f)
             ftp.retrbinary('RETR %s/%s' % (path,f), fh.write)
-
 
 
     ftp.quit()

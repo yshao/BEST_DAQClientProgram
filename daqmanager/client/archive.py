@@ -1,15 +1,24 @@
+import datetime
+from common.env import Env
+from daqmanager.client.utils import tm_to_epoch, get_localepoch, make_tarfile
+from daqmanager.remote.remote import Remote
+
 __company__ = 'Boulder Environmental Sciences and Technology'
 __project__ = ''
 __author__ = 'Y. Shao'
 __created__ = '3/16/2015' '6:37 PM'
 
-### make folder with epochtime ###
-# archive to folder
-# move to
+
 def archive_folder(tm):
-    nowtime.tm()
-    make_tar(tm,filep)
+    cfg=Env().getCOnfig()
+    local_dir=cfg['local_dir']
+
+    tm=get_localepoch()
+
+    path='%s/%s' % (local_dir,tm)
+    filep=make_tarfile(path,'%s.tar.gz' % tm)
+    # make_tar(tm,filep)
 
     remote=Remote('dataserver')
     remote.upload([filep])
-    remote.run()
+    # remote.run() optional

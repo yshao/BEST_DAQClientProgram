@@ -81,6 +81,8 @@ class DaqDB(object):
                                 + ','.join(['?']*len(columns)) + ')',
                                 data)        
 
+
+
     # def insert_fits(self, filename, columns):
     #     log.info('Ingesting {0}'.format(filename))
     #     # Using .__array__() is important for speed
@@ -146,7 +148,7 @@ class DaqDB(object):
         self.connection.close
 
     def dump_tables(self):
-        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        self.cursor.execute('select name from sqlite_master where type = "table"')
         print(self.cursor.fetchall())
 
 
