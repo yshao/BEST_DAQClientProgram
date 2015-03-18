@@ -1,21 +1,24 @@
+import shutil
 import numpy as np
 import datetime
 import struct
 import os
-# from PyQt4.QtCore import pyqtSignal, SIGNAL, QThread
-from common.sqliteutils import DaqDB
+from PyQt4.QtCore import pyqtSignal, SIGNAL, QThread
+from best.common.sqliteutils import DaqDB
+from common.env import Env
 
-class DecodeInuTask():
-    # signalNumOfRecords=pyqtSignal(int)
-    # signalCommit=pyqtSignal()
 
-    TAILSYMBD="3D3D"
+class DecodeInuTask(QThread):
+    signalNumOfRecords=pyqtSignal(int)
+    signalCommit=pyqtSignal()
+
+    HEADER_STAT="3D3D"
     HEADER_INU="FFFA"
     HEADER_GPS="FF01"
     HEADER_TIME="41374146"
     TAIL_TIME="41374246"
 
-    DB_COMMIT_INTERVAL=5
+    DB_COMMIT_INTERVAL=500
 
 # GPS structure
 #
@@ -55,7 +58,7 @@ class DecodeInuTask():
 # Status    byte            1
 #   CS      byte            1
 
-    INU_FORMAT_LIST= [
+    INU_FORMAT= [
                '<BBBB',
                 'HHHHHHHHH',
                 'H'
@@ -67,23 +70,31 @@ class DecodeInuTask():
                 'B',
                 ]
 
-    STAT_FORMAT_LIST= [
-               '>LHH'
+
+    STAT_FORMAT= ['>2s',
+               'LHH',
+               '2s',
                 ]
 
-    STAT_TIME_FORMAT_LIST= [
+    STAT_TIME_FORMAT= [
                '>B',
                'BBBBBBBBBBBBBB',
                'B'
                 ]
 
-    inu_fmt="".join(INU_FORMAT_LIST)
-    stat_fmt="".join(STAT_FORMAT_LIST)
-    statTime_fmt="".join(STAT_TIME_FORMAT_LIST)
-    DAQ_BUFFER_SIZE= struct.calcsize(inu_fmt)
-    STAT_SIZE=struct.calcsize(stat_fmt)
-    STAT_TIME_SIZE=struct.calcsize(statTime_fmt)
-    # print STAT_TIME_SIZE
+    inu_fmt="".join(INU_FORMAT)
+    stat_fmt="".join(STAT_FORMAT)
+
+    def calc_struct_size(self,lFormats):
+        # lFormats=self.lFormat
+        # print 'calc_struct'
+        # print lFormats
+        total=0
+        for format in lFormats:
+            # print "".join(format)
+            total += struct.calcsize("".join(format))
+        # print total
+        return total
 
     def __del__(self):
         self.db.close()
@@ -91,7 +102,7 @@ class DecodeInuTask():
 
     def __init__(self):
         ""
-        # QThread.__init__(self)
+        QThread.__init__(self)
         self.numRecords=0
         self.currBytes=0
         self.totalBytes=0
@@ -99,16 +110,24 @@ class DecodeInuTask():
         self.db=DaqDB("../inu.db")
         self.pdb=DaqDB("../daq.db")
 
-        # self.db.dump_tables()
+        ### dataframe attrib ###
+        self.INU_SIZE= self.calc_struct_size([self.INU_FORMAT])
+        self.STAT_SIZE=self.calc_struct_size([self.STAT_FORMAT])
+        self.STAT_TIME_SIZE=self.calc_struct_size([self.STAT_TIME_FORMAT])
 
         # self.connect(self,SIGNAL("task_decode()"),self.parse_inu,file)
 
     def commit(self):
         ""
         self.db.commit()
+                        # self.numRecords=num_recs
+                        # self.currBytess=
+        # self.emit(SIGNAL("decoded_sets()"))
+        self.signalCommit.emit()
+        self.signalNumOfRecords.emit(self.numRecords)
 
 
-    # find the end of first header
+    ### find valid header ###
     def seek_until(self,fh,start_pos):
       pre=start_pos
       while (pre < self.file_size):
@@ -119,17 +138,22 @@ class DecodeInuTask():
         if bytes1+bytes2 == self.HEADER_INU:
           fh.seek(-1,1)
           break
+        if bytes1+bytes2 == self.HEADER_TIME:
+          fh.seek(-1,1)
+          break
         else:
           pre+=1
 
-      return fh.tell()
+      return bytes1+bytes2,fh.tell()
 
     # Inu Version
-    def get_next_record(self,fh,file_size,start,estimate,margin=6):
+    def get_next_record(self,fh,file_size,start,margin=4):
         pos=start
-        dr=fh.read(estimate - margin)
 
-        while(pos+estimate < file_size):
+        # b=fh.read(1)
+        dr=''
+        ### while not exceeding file size
+        while(pos < file_size):
 
             dr1=fh.read(1)
             dr2=fh.read(1)
@@ -138,12 +162,59 @@ class DecodeInuTask():
             hex2=dr2.encode("hex").upper()
 
             dr=dr+dr1
+            symb=hex1+hex2
+            b=False
 
-            if hex1+hex2 == self.HEADER_INU:
+            # print readahead.encode('hex')
+            if symb in self.HEADER_INU:
+
                 fh.seek(-1,1)
-                break
+                dr=fh.read(self.INU_SIZE)
+                # b=True
 
-        return hex1+hex2,dr[:-1]
+                ### deal with legacy timestamp ###
+                readahead=fh.read(2).encode('hex').upper()
+                fh.seek(-2,1)
+                # print readahead.encode('hex')
+                if readahead == symb:
+                    ""
+                    b=True
+                else:
+                    ""
+                    dr=dr+fh.read(12)
+                    readahead2=fh.read(2).encode('hex').upper()
+                    fh.seek(-2,1)
+                    if readahead2 == symb:
+                        b=True
+
+            ### 3rd condition exists for extended data, toss for now
+                # print dr.encode('hex'), len(dr),readahead,readahead2
+
+            elif symb in self.HEADER_STAT:
+                fh.seek(-1,1)
+                dr=fh.read(self.STAT_SIZE)
+                b=True
+                # print 'stat'
+                # print dr.encode('hex')
+                # print len(dr)
+
+            ### offset by 1 to prevent repetition in symb matching
+            if b:
+                if len(dr) in [self.INU_SIZE,self.STAT_SIZE,84]:
+
+                    fh.seek(-1,1)
+                    break
+
+        ### frame size condition
+        if symb == self.HEADER_INU:
+            dr=dr
+        elif symb == self.HEADER_STAT:
+            # fh.seek(1,1)
+            dr=dr
+        # print recordType
+        # return hex1+hex2,dr[:-1]
+        return symb,dr
+
 
     def convert_timestamp(bytes,):
         timef=np.frombuffer(bytes, dtype=np.int16)
@@ -168,16 +239,18 @@ class DecodeInuTask():
         statTime=""
         size=idx4-idx3-8
 
-        print idx
-        print idx2
-        print idx3
-        print idx4
-        print size
-        print self.STAT_TIME_SIZE*2
+        # print idx
+        # print idx2
+        # print idx3
+        # print idx4
+        # print size
+        # print self.STAT_TIME_SIZE*2
         # print ndr[idx +8:idx+8+self.STAT_TIME_SIZE*2]
+
         if size == self.STAT_TIME_SIZE*2:
-            print ndr
-            print ndr[idx3 +8:idx3+8+self.STAT_TIME_SIZE*2]
+
+            # print ndr
+            # print ndr[idx3 +8:idx3+8+self.STAT_TIME_SIZE*2]
             statTime=ndr[idx3 +8:idx3+8+self.STAT_TIME_SIZE*2]
 
         ### remove sections ###
@@ -189,6 +262,19 @@ class DecodeInuTask():
         nndr=nndr.decode('hex')
         return nndr,stat,statTime
 
+    # remove legacy timestamp
+    def extract_timestamp(self,dr):
+        ndr=dr.encode('hex')
+        i=ndr.find(self.HEADER_STAT.lower())
+
+        ### byte is 0xhh###
+        tm=ndr[i:i+24]
+        data=ndr[:i]+ndr[i+24:]
+        tm=tm.decode('hex')
+
+        data=data.decode('hex')
+
+        return data,tm
 
     # clean off artifiacts
     def reject_artifacts(self,dr):
@@ -199,53 +285,118 @@ class DecodeInuTask():
 
         return ndr
 
+
+
     def commit_decoding_results(self):
-        print 'commiting...'
         rec={}
-        rec.update({'fileName':self.file,'file_index':self.file_index,'fileSize':self.file_size,'recordsRejected':self.bad_recs,'recordsUploaded':self.num_recs})
-        self.pdb.insert_dict(rec)
+        # rec.update({'fileName':self.file,'file_index':self.file_index,'fileSize':self.file_size,'recordsRejected':self.bad_recs,'recordsUploaded':self.num_recs})
+        rec.update({'file_name':self.file,'file_index':self.file_index,'packet_len':self.file_size,'bIdx':self.num_recs})
+        self.pdb.insert_dict('decoder',rec)
         self.pdb.commit()
 
     def parse_inu(self,file,file_index):
         ""
 
+        self.file=file
+        self.file_index=file_index
         self.file_size=os.stat(file).st_size
         print "Opening file %s size %s" % (file, self.file_size)
 
         with open(file,'rb') as fh:
-          pos_s=self.seek_until(fh,0)
+          recordType,pos_s=self.seek_until(fh,0)
 
           self.num_recs=0
           self.bad_recs=0
 
+          recBuffer=[]
           while(True):
             try:
                 pos_s=fh.tell()
 
-                if pos_s+self.DAQ_BUFFER_SIZE > self.file_size:
+                if pos_s+self.INU_SIZE > self.file_size:
                     break
 
-                recordType,chunk=self.get_next_record(fh,self.file_size,pos_s,self.DAQ_BUFFER_SIZE)
+                recordType,chunk=self.get_next_record(fh,self.file_size,pos_s)
+
                 chunk=self.reject_artifacts(chunk)
-
-                chunk,stat,statTime=self.detect_symbol(chunk)
-
-
-                ### check chunk is valid
-
+                # print chunk.encode('hex')
                 length=len(chunk)
-                if length != self.DAQ_BUFFER_SIZE:
-                    self.bad_recs = self.bad_recs+1
+
+                ### decoding ###
+                ### toss unhandled frame size
+                if length not in [self.INU_SIZE,self.STAT_SIZE,84]:
+                    ### bad records
+                    self.bad_recs += 1
                     rec={}
                     rec.update({'file_index':file_index,'file_name':file,'bIdx':pos_s,'packet_len':length})
                     self.db.insert_dict("decoder",rec)
                     self.pdb.commit()
 
                     self.seek_until(fh,pos_s)
-                else:
-                    print 'ending'
+
+                ### stats
+                if length == self.STAT_SIZE:
+                    ### good records
+                    self.num_recs += 1
+                    if recordType == self.HEADER_STAT:
+                        rec=struct.unpack(self.stat_fmt,chunk)
+
+                    rechash={}
+                    rechash.update({
+                        'rIdx':rec[2],'wIdx':rec[3],'counter':rec[1]
+                    })
+                    rechash.update({'file_index':file_index,  'packet_len':length})
+                    # print rechash
+                    recBuffer.append(rechash)
+                ### data + stats
+                elif length == self.INU_SIZE+self.STAT_SIZE:
+                    # print length
+                    ### good records
+                    self.num_recs += 1
+
+
+                    cData,cStats=self.extract_timestamp(chunk)
+                    # print 'data'
+                    # print cData
+                    # print len(cData)
+                    # print len(cStats)
+                    if len(cData) == self.INU_SIZE and len(cStats) == self.STAT_SIZE:
+                        rec=struct.unpack(self.inu_fmt,cData)
+                        recStats=struct.unpack(self.stat_fmt,cStats)
+
+                        rechash={}
+                        rechash.update({
+                                'PRE':rec[0], 'BID':rec[1], 'MID':rec[2], 'LEN':rec[3],
+                                "accX":rec[4], "accY":rec[5], "accZ":rec[6],
+                                'gyrX':rec[7], 'gyrY':rec[8], 'gyrZ':rec[9],
+                                'magX':rec[10], 'magY':rec[11], 'magZ':rec[12],
+                                'temp':rec[13],
+                                'Press':rec[14],'bPrs':rec[15],'ITOW':rec[16],
+                                'LAT':rec[17],'LON':rec[18],'ALT':rec[19],'VEL_N':rec[20],'VEL_E':rec[21],'VEL_D':rec[22],
+                                'Hacc':rec[23],'Vacc':rec[24],'Sacc':rec[25],
+                                'bGPS':rec[26],
+                                'TS':rec[27],
+                                'STATUS':rec[28],'CS':rec[29],
+                                # 'tailsymb':rec[28]
+
+                                })
+
+                        rechash.update({
+                            'rIdx':recStats[2],'wIdx':recStats[3],'counter':recStats[1]
+                        })
+                        rechash.update({'file_index':file_index,  'packet_len':length})
+                        recBuffer.append(rechash)
+
+
+                ### data
+                # elif length == self.INU_SIZE:
+                elif length == self.INU_SIZE:
+                    ### good records
+                    self.num_recs += 1
+
                     if recordType == self.HEADER_INU:
                         rec=struct.unpack(self.inu_fmt,chunk)
+                        # print self.inu_fmt
 
                     ### add in processor info ###
                     timestamp=''
@@ -267,28 +418,21 @@ class DecodeInuTask():
 
                             })
 
-                    if stat != "":
-                        statrec=struct.unpack(self.stat_fmt,stat)
-                        rechash.update({'counter':statrec[0],'wIdx':statrec[1],'rIdx':statrec[2]})
-
-                    if statTime != "":
-                        statTRec=struct.unpack(self.statTime_fmt,statTime)[2:]
-                        timestamp=self.convert_time(statTRec)
-
-                        rechash.update({'counter':timestamp})
-
                     rechash.update({'file_index':file_index,  'packet_len':length})
-                    self.db.insert_dict("inu",rechash)
+                    recBuffer.append(rechash)
 
-                    self.num_recs += 1
-
-                    print 'pre commit'
-                    if self.num_recs % self.DB_COMMIT_INTERVAL == 0 and self.num_recs > 0 :
-                        print "commit %s" % self.num_recs
-                        self.commit()
+                ### commit interval ###
+                if self.num_recs % self.DB_COMMIT_INTERVAL == 0 and self.num_recs > 0 :
+                    # print recBuffer
+                    for rec in recBuffer:
+                        self.db.insert_dict("inu",rec)
+                    print "commit %s" % self.num_recs
+                    self.commit()
 
             except Exception,e:
-              print "read error: "+ str(e)
+                print "read error: ",str(Exception.__class__),str(e)
+                # print self.STAT_SIZE
+                # print self.INU_SIZE
 
         ### add decoding results
         self.commit_decoding_results()
@@ -296,7 +440,7 @@ class DecodeInuTask():
     #convert raw counts into proper numerical
     def apply_scaling(self,dr):
         ""
-        ndr  = [i for i in range(self.DAQ_BUFFER_SIZE)]
+        ndr  = [i for i in range(self.INU_SIZE)]
         ndr[0] = dr[0]   * 2500. / 2**12
         ndr[1] = dr[1]   * 2500. / 2**12
         ndr[2] = dr[2]   * 2500. / 2**12
@@ -392,6 +536,24 @@ class DecodeInuTask():
 
 if __name__ == '__main__':
     task=DecodeInuTask()
-    p='C:/datasets/03162015/archival_ip_192_168_38_46/20000101_000623.imu'
-    task.parse_inu(p,0)
+    task.parse_inu("data/20000101_000157.imu",0)
+
+class DataUtils():
+    def __init__(self,cfg,fdr):
+        ""
+        self.cfg=cfg
+
+
+
+    def create_db_buffer(self):
+        ""
+    def decode_inu(self,filep,idx):
+        ### create_buffer ###
+        bufferp='%s/%sinu.db' (fdr,filen)
+        cfg=Env().getConfig()
+        homep=Env().getpath('HOME')
+        dbp=homep+'/common/resources/daq.db'
+        shutil.copy(dbp,bufferp)
+        task=DecodeInuTask()
+        task.parse_inu(filep,idx)
 
