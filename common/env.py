@@ -39,6 +39,9 @@ class Env():
     def getpath(self,param):
         return self.param
 
+    def getParam(self):
+        return self.param
+
 
     def getConfig(self):
         return self.k
