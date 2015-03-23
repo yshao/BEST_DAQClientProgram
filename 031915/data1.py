@@ -1,3 +1,5 @@
+import copy
+import os
 import pandas as pd
 from pandas.lib import to_datetime
 from common.env import Env
@@ -18,9 +20,10 @@ s = s.reindex(idx, fill_value=0)
 # s.reindex('CS',fill_value=0)
 
 
-
-
-homepath=Env().getParam()['HOME']
+path=os.environ['PATH']
+print path
+# homepath=Env().getParam()['HOME']
+homepath='C:/Users/yuping/Workspace/best'
 # homepath=cfg.getpath('HOME')
 
 import pandas.io.sql as psql
@@ -90,8 +93,8 @@ def get_gaps(series):
 
 # print pd.DataFrame(range(0,255))
 
-p=pd.DataFrame(range(0,255))
-nn=np.array(range(0,255))
+p=pd.DataFrame(range(0,256))
+nn=np.empty([256,1])
 nd=np.array(df['CS'])
 nt=np.array(df['counter'])
 # ar=np.array(df)
@@ -112,12 +115,59 @@ ndiff =np.diff(nd)
 #     i=ndiff[r]
     # np.array(range(s,s+diff))
 
-ndd=np.where(ndiff < 0)
-mpad=ndd[0].shape[0]
-nnm=np.array([])
-for i in range(0,mpad):
-    nnm=np.hstack([nnm,nn])
+ndd=np.where(ndiff < 0)[0]
+# ndd=np.vstack((np.array([0]),ndd))
+# ndd=np.vstack((ndd,np.array(ndiff.shape[0])))
+# ndd
+mpad=ndd.shape[0]
+nnm=np.empty([0,1])
+
+print nd.shape
+print nt.shape
+print ndiff[0:80]
+# print nd
+print nd[0:80]
+print ndd[0:80]
+print 'diffA',mpad
+print nn.shape
+print nn[0:100]
+for n in range(0,mpad-1):
+    st=ndd[n];end=ndd[n+1]
+    # print st, end
+    # print nt[st], nt[end]
+    # print 'CS',nd[st], nd[end]
+    # print n, i,nd[i],nt[i]
+    newA=copy.copy(nn)
+    for i in range(st,end+1):
+
+        csIdx=nd[i]
+        # print i,csIdx
+        newA[csIdx]=nt[i]
+    print 'stack %s' % n
+    # print newA
+    # print nnm
+    nnm=np.vstack((nnm,newA))
+
+
+print nnm[0:300]
 print nnm.shape
+print mpad
+# for i in range(0,mpad-1):
+#     print i, nd[i], nd[i+1]
+#       print i % 255
+#       if i % 255 == 0:
+#           aNew=copy.copy(nn)
+
+      # aNew[nd[]]
+#     nn[nd[i]]=1
+#     nn[nd[i+1]]=1
+#     nnm=np.hstack([nnm,nn])
+
+# print nnm[0:30]
+# print nd[0:30]
+# print nt[0:30]
+# print nnm.shape[0]/256
+
 # for r in nd:
 #     i=nd[r]
 #     data=nt[r]
