@@ -20,10 +20,10 @@ s = s.reindex(idx, fill_value=0)
 # s.reindex('CS',fill_value=0)
 
 
-path=os.environ['PATH']
+path=os.environ['BEST_PATH']
 print path
 # homepath=Env().getParam()['HOME']
-homepath='C:/Users/yuping/Workspace/best'
+homepath='%s/%s/$s' % (path,'PRACO','daqclient')
 # homepath=cfg.getpath('HOME')
 
 import pandas.io.sql as psql
