@@ -23,7 +23,7 @@ s = s.reindex(idx, fill_value=0)
 path=os.environ['BEST_PATH']
 print path
 # homepath=Env().getParam()['HOME']
-homepath='%s/%s/$s' % (path,'PRACO','daqclient')
+homepath='%s/%s/%s' % (path,'PRACO','daqclient')
 # homepath=cfg.getpath('HOME')
 
 import pandas.io.sql as psql
@@ -33,7 +33,7 @@ bufferp='%s/%s'%(homepath,buf)
 print bufferp
 con = lite.connect(bufferp)
 with con:
-    sql = "SELECT CS,counter FROM inu where CS >= 0"
+    sql = "SELECT CS,counter from inu where CS != ''"
     df = psql.frame_query(sql, con)
     print df.shape
 
@@ -94,7 +94,7 @@ def get_gaps(series):
 # print pd.DataFrame(range(0,255))
 
 p=pd.DataFrame(range(0,256))
-nn=np.empty([256,1])
+nn=np.zeros([256,1])
 nd=np.array(df['CS'])
 nt=np.array(df['counter'])
 # ar=np.array(df)
@@ -122,36 +122,64 @@ ndd=np.where(ndiff < 0)[0]
 mpad=ndd.shape[0]
 nnm=np.empty([0,1])
 
-print nd.shape
-print nt.shape
-print ndiff[0:80]
-# print nd
-print nd[0:80]
-print ndd[0:80]
+print nd.shape,nt.shape,ndiff.shape,ndd.shape,mpad
+# print nt.shape
+# print ndiff[0:100]
+# print ndd[0:100]
+# print ndiff[ndd[0]]
+# print nd[0:80]
+
 print 'diffA',mpad
-print nn.shape
-print nn[0:100]
-for n in range(0,mpad-1):
-    st=ndd[n];end=ndd[n+1]
-    # print st, end
-    # print nt[st], nt[end]
+# print nn.shape
+# print nn[0:100]
+print np.zeros(1)
+print np.array([2000,4000])
+print ndd[0:100]
+aDiffIdx=np.hstack((np.zeros(1),ndd,np.array(nd.shape[0])))
+print 'shape',ndd.shape
+print 'shape',aDiffIdx.shape
+print nn.shape,nn[0]
+print nn[0]
+print nd[0],nt[0]
+print aDiffIdx[:]
+
+for n in range(0,mpad):
+    print 'stack %s' % n
+    st=aDiffIdx[n];end=aDiffIdx[n+1]
+    print st, end
+    print nt[st], nt[end]
+    print nd[st], nd[end]
     # print 'CS',nd[st], nd[end]
     # print n, i,nd[i],nt[i]
     newA=copy.copy(nn)
-    for i in range(st,end+1):
-
+    for i in range(int(st),int(end+1)):
+        tm=nt[i]
         csIdx=nd[i]
-        # print i,csIdx
-        newA[csIdx]=nt[i]
-    print 'stack %s' % n
+        # print i,csIdx,tm
+
+        newA[csIdx,0]=csIdx
+        newA[csIdx,1]=tm
+
     # print newA
     # print nnm
+    # print 'check'
+    print newA.shape
+    # print newA[69]
+    # np.vstack((nnm,))
+
+
     nnm=np.vstack((nnm,newA))
+    print nnm[st],nnm[end], nnm[69], nnm[st],nnm[end-8]
 
 
-print nnm[0:300]
+# print nnm[0:300]
 print nnm.shape
-print mpad
+print nnm[0],nnm[199167],nnm[199159],nnm[255+21]
+print nnm[199167-256:]
+
+
+
+# print mpad
 # for i in range(0,mpad-1):
 #     print i, nd[i], nd[i+1]
 #       print i % 255

@@ -31,7 +31,7 @@ class DaqDB(object):
         sqlite3.register_adapter(np.float32, float)
         sqlite3.register_adapter(bool, int)
         #sqlite3.register_converter("BOOLEAN", lambda v: bool(int(v)))
-        
+        print filename
         self.filename = filename
         self.connection = sqlite3.connect(self.filename,
                                           isolation_level='EXCLUSIVE')
@@ -39,7 +39,7 @@ class DaqDB(object):
         self.connection.text_factory = str
         self.cursor = self.connection.cursor()
         self.optimise_inserts()
-        # self.insert_init()
+
 
 
     # def __del__(self):
@@ -272,6 +272,15 @@ DATA_COL = [
     ]
 
 
+TIME_COL=[
+    'tm_counter',
+    'tm_base',
+    'tm_full',
+    'filename'
+    'systime'
+
+]
+
     ### init
 def insert_init():
     db=DaqDB("daq.db")
@@ -313,12 +322,17 @@ def create_full():
     sl.copy(src,os.path.join(DB_DIR,"inu.db"))
     print os.path.join(DB_DIR,DB_NAME)
 
+def create_timedb():
+    create_db_light('time',TIME_COL)
+
+
 if __name__ == '__main__':
     # generate tables
 # def create_db():
     # sl.rename(os.path.join(DB_DIR,DB_NAME),os.path.join(DB_DIR,DB_NAME+".bk"))
 
-    create_full()
+    # create_full()
+    create_timedb()
 
 
 

@@ -6,12 +6,15 @@ from common.iniconfig import IniParser
 
 
 class Env():
-    param={'HOME':'c:/Users/Ping/Code/best/daqclient1'}
+    # param={'HOME':'c:/Users/Ping/Code/best/daqclient1'}
 
     def __init__(self):
         ""
         #TODO: installer then test this
         # self.init_from_os()
+        param={}
+        param['HOME']=os.environ['BEST_PATH']+'/PRACO/daqclient'
+        self.param=param
 
         config=self.param['HOME']+'/common/config.ini'
         # print config
@@ -22,6 +25,8 @@ class Env():
         pd=parser.as_dict()
         # print pd
         d={}
+        print self.param
+        print pd
         d=pd['base']
         d['radiometer']=pd['radiometer']
 
