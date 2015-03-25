@@ -1,4 +1,14 @@
-from common.netutils import *
+import telnetlib
+# from common.netutils import *
+
+import os
+from common.env import Env
+from daqmanager.client.ftpfunc import ftp_upload
+
+
+def touch(fname, times=None):
+    with open(fname, 'a'):
+        os.utime(fname, times)
 
 ### check network ###
 
@@ -44,6 +54,7 @@ from common.netutils import *
 # print t1.read_until(">")
 # t1.write("cd FlashDisk/Best"+newline)
 # print t1.read_until("Best")
+from common.utils import get_timestamp
 
 
 t2=telnetlib.Telnet("192.168.38.31",port=23)
@@ -127,16 +138,22 @@ time.sleep(20)
 
 
 ### DAQ
-t1.write("DAQrad1"+newline)
-print t1.read_until(">",3)
+# t1.write("DAQrad1"+newline)
+# print t1.read_until(">",3)
 t2.write("DAQArchImuS1"+newline)
 print t2.read_until(">",3)
 t3.write("DAQenc_new"+newline)
 print t3.read_until(">",3)
-t1.close()
+# t1.close()
 t2.close()
 t3.close()
 
+tm=get_timestamp()
+tm=tm.replace('-','_')
+touch(tm)
+cfg=Env().getConfig()
+ftp_upload(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'],tm)
+ftp_upload(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'],tm)
 import time
 
 # t2=telnetlib.Telnet("192.168.38.31",port=23)

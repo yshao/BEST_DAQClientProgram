@@ -4,7 +4,7 @@ import datetime
 import struct
 import os
 from PyQt4.QtCore import pyqtSignal, SIGNAL, QThread
-from best.common.sqliteutils import DaqDB
+from common.sqliteutils import DaqDB
 from common.env import Env
 
 
@@ -535,8 +535,10 @@ class DecodeInuTask(QThread):
 
 
 if __name__ == '__main__':
+    os.remove('../inu.db')
+    shutil.copy('../daq.db','../inu.db')
     task=DecodeInuTask()
-    task.parse_inu("data/20000101_000157.imu",0)
+    task.parse_inu("../client/data/20000101_000736.imu",0)
 
 class DataUtils():
     def __init__(self,cfg,fdr):

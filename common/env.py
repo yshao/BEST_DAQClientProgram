@@ -13,7 +13,8 @@ class Env():
         #TODO: installer then test this
         # self.init_from_os()
         param={}
-        param['HOME']=os.environ['BEST_PATH']+'/PRACO/daqclient'
+        print os.environ['PATH']
+        param['HOME']="c:/Users\yuping/Workspace/best"
         self.param=param
 
         config=self.param['HOME']+'/common/config.ini'

@@ -66,11 +66,6 @@ class DecodeEncTask(QThread):
                        "LHH","sHBsHBsHBsHBsHBsHB",
                        "LHH",
                        "LHH",
-                       "LHH","sHBsHBsHBsHBsHBsHB",
-                       "LHH",
-                       "LHH",
-                       "LHH","sHBsHBsHBsHBsHBsHB",
-                       "LHH",
                        "LHH",
                        "HHL2s",
                 ]
@@ -231,11 +226,6 @@ class DecodeEncTask(QThread):
     #   enc mo1 mo2 16 26 36 46 56 66
     #   enc mo1 mo2
     #   enc mo1 mo2
-    #   enc mo1 mo2 12 22 32 42 52 62
-    #   enc mo1 mo2
-    #   enc mo1 mo2
-    #   enc mo1 mo2 16 26 36 46 56 66
-    #   enc mo1 mo2
     #   enc mo1 mo2
     #   rIdx wIdx counter 3C3C
 
@@ -288,27 +278,6 @@ class DecodeEncTask(QThread):
 
         ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
         ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
-
-        ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-
-        ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
-        ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
-
-        ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-        ndr.append(cdr.next());ndr.append(bin_to_int([cdr.next(),cdr.next()],24))
-
-        ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
         ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
 
         ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next());ndr.append(cdr.next())
@@ -331,6 +300,7 @@ class DecodeEncTask(QThread):
           while(True):
             try:
                 pos_s=fh.tell()
+                self.file_pos=pos_s
 
                 if pos_s+self.DAQ_BUFFER_SIZE > file_size:
                     break
@@ -442,62 +412,17 @@ class DecodeEncTask(QThread):
                     rechash.update({ 'encoder_counter':rec[73], "mo1":rec[74], "mo2":rec[75]})
                     self.db.insert_dict("enc",rechash)
 
-                    ### 3 ###
-                    rechash={}
-                    # print 'numbering char'
-                    # " - 22, 2 - 32, b - 62
-                    hl=[ rec[79],rec[81],rec[83],rec[85],rec[87],rec[89]]
-                    # print hl
-                    hl=[rec[80],rec[82],rec[84],rec[86],rec[88],rec[90]]
-                    # print hl
-
-                    rechash.update({ 'encoder_counter':rec[76], "mo1":rec[77], "mo2":rec[78],
-                                    'c1_s2':rec[80], 'c2_s2':rec[82], 'c3_s2':rec[84],'c4_s2':rec[86],
-                                    'c5_s2':rec[88], 'c6_s2':rec[90]})
-
-                    self.db.insert_dict("enc",rechash)
-
                     ###
                     rechash={}
-                    rechash.update({ 'encoder_counter':rec[91], "mo1":rec[92], "mo2":rec[93]})
-                    self.db.insert_dict("enc",rechash)
-
-                    ###
-                    rechash={}
-                    rechash.update({ 'encoder_counter':rec[94], "mo1":rec[95], "mo2":rec[96]})
-                    self.db.insert_dict("enc",rechash)
-
-
-                    ### 4 ###
-                    # print 'numbering char'
-                    # " - 22, 2 - 32, b - 62
-                    hl=[ rec[100],rec[102],rec[104],rec[106],rec[108],rec[110]]
-                    # print hl
-                    hl=[rec[101],rec[103],rec[105],rec[107],rec[109],rec[111]]
-                    # print hl
-
-                    rechash={}
-                    rechash.update({ 'encoder_counter':rec[97], "mo1":rec[98], "mo2":rec[99],
-                                    'c1_s6':rec[101], 'c2_s6':rec[103], 'c3_s6':rec[105],'c4_s6':rec[107],
-                                    'c5_s6':rec[109], 'c6_s6':rec[111]})
-
-                    self.db.insert_dict("enc",rechash)
-
-                    ###
-                    rechash={}
-                    rechash.update({ 'encoder_counter':rec[112], "mo1":rec[113], "mo2":rec[114]})
-                    self.db.insert_dict("enc",rechash)
-
-                    ###
-                    rechash={}
-                    rechash.update({ 'encoder_counter':rec[115], "mo1":rec[116], "mo2":rec[117]})
+                    rechash.update({ 'encoder_counter':rec[76], "mo1":rec[77], "mo2":rec[78]})
                     self.db.insert_dict("enc",rechash)
 
                     ### 5 ###
                     rechash={}
 
-                    rechash.update({'wIdx':rec[118], 'rIdx':rec[119], 'counter':rec[120], 'tailsymb':rec[121],
+                    rechash.update({'wIdx':rec[79], 'rIdx':rec[80], 'counter':rec[81], 'tailsymb':rec[82],
                                     'timestamp':timestamp})
+                    # rechash.update({'file_index':file_index, 'packet_len':length, 'file_pos':self.file_pos})
                     rechash.update({'file_index':file_index, 'packet_len':length})
                     self.db.insert_dict("enc",rechash)
 
@@ -521,7 +446,7 @@ if __name__ == '__main__':
     shutil.copy('../daq.db','../enc.db')
     task=DecodeEncTask()
     task.calc_struct_size()
-    task.parse_enc("../../20000101_000157.enc",0)
+    task.parse_enc("../../data/20000101_000254.enc",0)
 
 
 
