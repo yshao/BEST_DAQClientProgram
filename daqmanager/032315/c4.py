@@ -76,7 +76,7 @@ tm=tm.replace('-','_')
 touch(tm)
 upload_time(cfg['archival_ip'],tm)
 upload_time(cfg['encoder_ip'],tm)
-time.sleep(2)
-os.remove(tm)
+time.sleep(5)
+os.move(tm,temp)
 
 

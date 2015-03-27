@@ -1,3 +1,11 @@
+##############
+# 0. clear previous data
+# 1. home motor
+# 2. starts motor
+# 3. starts DAQ
+# 4. sync time
+
+
 import os
 import telnetlib
 import time
