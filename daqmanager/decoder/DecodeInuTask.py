@@ -4,6 +4,7 @@ import datetime
 import struct
 import os
 from PyQt4.QtCore import pyqtSignal, SIGNAL, QThread
+import sys
 from common.sqliteutils import DaqDB
 from common.env import Env
 
@@ -178,11 +179,11 @@ class DecodeInuTask(QThread):
     # Inu Version
     def get_next_record(self,fh,file_size,start,margin=4):
         pos=start
-
+        # print 'pos',pos
         # b=fh.read(1)
         dr=''
         ### while not exceeding file size
-        while(pos < file_size):
+        while(pos + 16 <= file_size):
 
             dr1=fh.read(1)
             dr2=fh.read(1)
@@ -193,7 +194,8 @@ class DecodeInuTask(QThread):
             dr=dr+dr1
             symb=hex1+hex2
             b=False
-
+            pos=fh.tell()
+            # print pos, file_size
             # print readahead.encode('hex')
             if symb in self.HEADER_INU:
 
@@ -330,6 +332,9 @@ class DecodeInuTask(QThread):
         self.file_index=file_index
         self.file_size=os.stat(file).st_size
         print "Opening file %s size %s" % (file, self.file_size)
+        print self.STAT_SIZE + self.INU_SIZE
+        if self.file_size < self.STAT_SIZE + self.INU_SIZE:
+            sys.exit(0)
 
         with open(file,'rb') as fh:
           recordType,pos_s=self.seek_until(fh,0)
@@ -342,7 +347,13 @@ class DecodeInuTask(QThread):
             try:
                 pos_s=fh.tell()
                 self.file_pos=pos_s
-                if pos_s+self.INU_SIZE > self.file_size:
+                # print self.file_size
+                # print pos_s+self.INU_SIZE +self.STAT_SIZE
+                # print self.file_size - pos_s -16
+                if pos_s+self.INU_SIZE +self.STAT_SIZE > self.file_size:
+                    break
+
+                if self.file_size - pos_s -16 < self.INU_SIZE+self.STAT_SIZE:
                     break
 
                 recordType,chunk=self.get_next_record(fh,self.file_size,pos_s)
@@ -389,7 +400,7 @@ class DecodeInuTask(QThread):
                     self.num_recs += 1
 
                     ### trasnform data ###
-                    crec=convert(rec)
+
 
                     cData,cStats=self.extract_timestamp(chunk)
 
@@ -397,6 +408,7 @@ class DecodeInuTask(QThread):
                         rec=struct.unpack(self.inu_fmt,cData)
                         recStats=struct.unpack(self.stat_fmt,cStats)
 
+                        crec=convert(rec)
                         rechash={}
                         rechash.update({
                                 'PRE':crec[0], 'BID':crec[1], 'MID':crec[2], 'LEN':rec[3],
@@ -477,7 +489,7 @@ class DecodeInuTask(QThread):
                 # print self.INU_SIZE
 
         ### add decoding results
-        self.commit_decoding_results()
+        # self.commit_decoding_results()
 
     #convert raw counts into proper numerical
     def apply_scaling(self,dr):
@@ -577,14 +589,9 @@ class DecodeInuTask(QThread):
 
 
 if __name__ == '__main__':
-    # os.remove('../inu.db')
-    # shutil.copy('../daq.db','../inu.db')
-    # task=DecodeInuTask()
-    # task.parse_inu("../client/data/20000101_000203.imu",0)
-
-    filep="../client/data/20000101_000203.imu"
+    filep="C:/datasets/1428000000/data/20000101_001617.imu"
     name=os.path.splitext(os.path.basename(filep))[0]
-    recp='%s/%s' % ('c:/datasets/buffer','%s.recI' % name)
+    recp='%s/%s' % ('c:/datasets','%s.recI' % name)
     # os.remove('../enc.db')
     # shutil.copy('../daq.db','../enc.db')
     try:

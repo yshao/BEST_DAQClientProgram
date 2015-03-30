@@ -128,7 +128,7 @@ class DecodeInuTask(QThread):
         self.totalBytes=0
         self.currFile=""
         self.db=DaqDB(recp)
-        self.pdb=DaqDB("../daq.db")
+        self.pdb=DaqDB("../../common/daq.db")
 
         ### dataframe attrib ###
         self.INU_SIZE= self.calc_struct_size([self.INU_FORMAT])
@@ -143,8 +143,8 @@ class DecodeInuTask(QThread):
                         # self.numRecords=num_recs
                         # self.currBytess=
         # self.emit(SIGNAL("decoded_sets()"))
-        self.signalCommit.emit()
-        self.signalNumOfRecords.emit(self.numRecords)
+        # self.signalCommit.emit()
+        # self.signalNumOfRecords.emit(self.numRecords)
 
 
     ### find valid header ###
@@ -332,8 +332,12 @@ class DecodeInuTask(QThread):
           while(True):
             try:
                 pos_s=fh.tell()
+                self.file_pos=pos_s
 
                 if pos_s+self.INU_SIZE > self.file_size:
+                    break
+
+                if self.file_size - pos_s -16 < self.INU_SIZE:
                     break
 
                 recordType,chunk=self.get_next_record(fh,self.file_size,pos_s)
@@ -572,9 +576,9 @@ if __name__ == '__main__':
     # task=DecodeInuTask()
     # task.parse_inu("../client/data/20000101_000203.imu",0)
 
-    filep="../client/data/20000101_000203.imu"
+    filep="C:/datasets/1428000000/data/20000101_001617.imu"
     name=os.path.splitext(os.path.basename(filep))[0]
-    recp='%s/%s' % ('c:/datasets/buffer','%s.recI' % name)
+    recp='%s/%s' % ('c:/datasets','%s.recI' % name)
     # os.remove('../enc.db')
     # shutil.copy('../daq.db','../enc.db')
     try:
@@ -582,28 +586,11 @@ if __name__ == '__main__':
     except:
         pass
 
-    shutil.copy('../daq.db',recp)
+    shutil.copy('../../common/daq.db',recp)
 
     task=DecodeInuTask(recp)
     # task.calc_struct_size()
     task.parse_inu(filep,0)
 
-class DataUtils():
-    def __init__(self,cfg,fdr):
-        ""
-        self.cfg=cfg
 
-
-
-    def create_db_buffer(self):
-        ""
-    def decode_inu(self,filep,idx):
-        ### create_buffer ###
-        bufferp='%s/%sinu.db' (fdr,filen)
-        cfg=Env().getConfig()
-        homep=Env().getpath('HOME')
-        dbp=homep+'/common/resources/daq.db'
-        shutil.copy(dbp,bufferp)
-        task=DecodeInuTask()
-        task.parse_inu(filep,idx)
 

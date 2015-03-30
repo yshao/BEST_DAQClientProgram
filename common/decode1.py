@@ -7,18 +7,13 @@ from common.sqliteutils import DaqDB
 import pandas.io.sql as psql
 cfg=Env().getConfig()
 # local=cfg['local_dir']
-local='c:/datasets/buffer'
-bufferp='%s/%s' % (local,'20000101_000204.recE')
-db=DaqDB(bufferp)
+
 
 # data=db.select_data('select counter from enc')
 import pandas.io.sql as sql
 
-con = sqlite3.connect(bufferp)
-print bufferp
-with con:
 
-    dr = psql.frame_query("SELECT counter from enc", con)
+
 
 # sql.
 # dr=pd.Series(dr)
@@ -37,16 +32,12 @@ import numpy as np
 #
 # print s.interpolate()
 
-s=pandas.Series(dr)
-dr.fillna(np.nan)
-
-aTime=np.array(dr.interpolate())
 
 # print  map(tuple, aTime.tolist())
 ### fill a column numpt numpy array ###
 
 # aTime=select counter frm enc
-cur=con.cursor()
+#     cur=con.cursor()
 # print cur
 # aTime=np.array([1 ,2 ,3])
 # aT
@@ -69,12 +60,10 @@ cur=con.cursor()
 # for i,val in enumerate(aTime):
 #     print i, val[0]
 
-mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
+
 # print mlist[0:10]
 # mlist=[(2,0),(3,1)]
-con.executemany('UPDATE enc SET counter=? WHERE rowId=?', mlist)
-# cur.executemany('UPDATE enc SET counter=? WHERE rowId=?',mlist)
-con.commit()
+
 
 
 ### populate CS frames ###

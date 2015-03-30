@@ -207,11 +207,13 @@ class DecodeEncTask(QThread):
         pos_s=start
         dr=fh.read(estimate - margin)
 
-        while(pos_s+estimate < file_size):
+        while(pos_s+estimate <= file_size):
+
             dr1=fh.read(2)
             hexsymb=dr1.encode("hex").upper()
 
             dr=dr+dr1
+            pos=fh.tell()
             if hexsymb == self.TAILSYMBC:
                 break
 
@@ -381,9 +383,15 @@ class DecodeEncTask(QThread):
 
     def parse_enc(self,file,file_index):
         ""
-        file_size=os.stat(file).st_size
-        print "Opening file %s size %s" % (file, file_size)
-        
+        self.file=file
+        self.file_index=file_index
+        self.file_size=os.stat(file).st_size
+        print "Opening file %s size %s" % (file, self.file_size)
+
+        if self.file_size < self.DAQ_BUFFER_SIZE:
+            exit
+
+        file_size=self.file_size
         with open(file,'rb') as fh:
           pos_s=self.seek_until(fh,file_size,0)
 
@@ -616,28 +624,11 @@ class DecodeEncTask(QThread):
                         # self.numRecords=num_recs
                         self.currBytess=self.currBytes+length
                         # self.emit(SIGNAL("decoded_sets()"))
-                        print 'POS',hex(self.file_pos)
-                        print pos_s+self.DAQ_BUFFER_SIZE, file_size
+                        # print 'POS',hex(self.file_pos)
+                        # print pos_s+self.DAQ_BUFFER_SIZE, file_size
 
             except Exception,e:
               print "read error: "+ str(e)
-
-
-def insert_tm():
-    ""
-    timedb=DaqDB('%s/time.db')
-    timedb.cursor.execute('insert localtime')
-
-    timedb.insert_ndarray('time',data,['tm_counter'])
-    timedb.cursor.execute('select *')
-
-    basetm=timedb.select()
-    timedb.execute('insert %s' % basetm)
-
-    counter=timedb.select_data('select tm_counter from time')
-    timedb.insert_ndarray('time',counter,['tm_full'])
-
-    ### grab and insert ###
 
 
 if __name__ == '__main__':
