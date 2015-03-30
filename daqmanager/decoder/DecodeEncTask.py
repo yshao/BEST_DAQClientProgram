@@ -15,11 +15,6 @@ class DecodeEncTask(QThread):
     signalCommit=pyqtSignal()
 
     TAILSYMBC="3C3C"
-    # HEADER_STAT_DUMP_INIT="A7E8"
-    # HEADER_STAT_DUMP_DATA="A7E1"
-    HEADER_STAT="A8A7"
-    HEADER_ENC="FCA7"
-
 
     DB_COMMIT_INTERVAL=5
 

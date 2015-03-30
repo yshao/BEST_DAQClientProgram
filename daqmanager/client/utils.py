@@ -31,7 +31,7 @@ def tm_to_epoch(dt,pattern):
     # pattern='%Y%m%d %H:%M:%S %p'
     # print dt
     epoch = int(time.mktime(time.strptime(dt, pattern)))
-    print epoch
+    # print epoch
     return epoch
 
 

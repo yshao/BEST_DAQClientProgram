@@ -1,7 +1,6 @@
 #!/usr/bin/python
  
-import binascii
- 
+
 def calcCheckSum(incoming):
     msgByte = hexStr2Byte(incoming)
     check = 0
@@ -31,4 +30,4 @@ if __name__ == '__main__':
  
     # msg = sys.argv[1]
     msg='4888'
-    print "CRC-8 Maxim/Dallas: %s " % hex(calcCheckSum(msg))
+    print "CRC-8 %s " % hex(calcCheckSum(msg))
