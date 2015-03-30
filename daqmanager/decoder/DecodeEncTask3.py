@@ -13,29 +13,17 @@ def c2h(d):
 
 
 def convert(rec):
-    crec=[]
+
     crec=[None] * 100
 
     counter=rec[88]
     crec[88]=unpackex(counter,H32)
 
-    # enc=rec[0]
-    # crec[0]=unpackex(rec[0],H32)
-    # enc=rec[0]
-    # crec[17]=unpackex(rec[17],H32)
-    # enc=rec[0]
-    # crec[32]=unpackex(rec[32],H32)
-    # enc=rec[0]
-    # crec[35]=unpackex(rec[35],H32)
-    # enc=rec[0]
-    # crec[38]=unpackex(rec[38],H32)
-    # enc=rec[0]
-    # crec[41]=unpackex(rec[41],H32)
     ### encoder
-
     for x in [0,17,32,35,38,41,44,61,76,79,82,85]:
         crec[x]=unpackex(rec[x],H32)
 
+    ### sensor
 
     return crec
 
@@ -615,19 +603,6 @@ class DecodeEncTask(QThread):
                     rechash.update({'file_pos':self.file_pos})
                     # rechash.update({'file_index':file_index, 'packet_len':length, 'file_pos':self.file_pos})
                     # print rec[91]
-
-
-                    # h=unpackex()
-                    # print int(h,16)
-                    # print hex(counter)
-                    # print hex(counter)[2:-1]
-                    # bytea=bytearray.fromhex(hex(counter)[2:-1])
-                    # bytea=array.array('B', hex(counter))
-                    # print bytea
-                    # l=map(ord, bytea)
-                    # print list(bytea[::-1])
-                    ### new ###
-                    # rechash.update({'counter':ncounter})
 
 
                     rechash.update({'file_index':file_index, 'packet_len':length,'file_pos':self.file_pos})

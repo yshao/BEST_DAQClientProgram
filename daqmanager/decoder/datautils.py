@@ -4,37 +4,22 @@ from daqmanager.client.utils import epoch_to_tm
 
 def hex_to_int11(data):
     h=''
-    # print 'HEX11'
-    # for d in data:
-    #     print d.encode('hex')
-    #     h=h+hex(d)[2:]
     b1='%04x' % data[0]
     b2='%02x' % data[1]
-    h=b1+b2
-    # print h
-    i=int(h,16)
-    # print bin(i)
-    # print i
-    # print "{0:12b}".format(i)
-    # return int(h,16)
-    # return bin(i)
-    return h
+    h=b1
+    val=int(h,16)
+
+    return val
 
 def hex_to_int24(data):
     h=''
-    # print 'HEX24'
-
-    # for d in data:
-    #     d.encode('hex')
-        # h=h+hex(d)[2:]
-
-    # print h
     b1='%04x' % data[0]
     b2='%02x' % data[1]
     h=b1+b2
     # print h
 
-    return int(h,16)
+    val=int(h,16)
+    return val
 
 def bin_to_int(data,num_bit=0,num_pads=0):
     "non standard number of bits conversion"

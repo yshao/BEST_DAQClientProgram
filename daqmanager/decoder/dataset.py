@@ -76,6 +76,10 @@ class Dataset():
             fh.write(self.bufferp)
             fh.write(self.res)
 
+    def create_dataset(self):
+        ""
+
+
 class DatasetMan():
     def __init__(self):
         ""
