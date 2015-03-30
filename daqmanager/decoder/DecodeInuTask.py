@@ -7,6 +7,35 @@ from PyQt4.QtCore import pyqtSignal, SIGNAL, QThread
 from common.sqliteutils import DaqDB
 from common.env import Env
 
+def unpackex(n,func):
+    # print func(n).encode('hex')
+    return int(func(n).encode('hex'),16)
+
+def HI32(args):
+    st= struct.pack('L',args)
+    # print 'hl'
+    # print st.encode('hex')
+    # print 'h1'
+    # print st[0:4].encode('hex')
+    # print 'h1b'
+    h2=st[0:1]
+    h1=st[1:2]
+    h4=st[2:3]
+    h3=st[3:4]
+    c= h1+h2+h3+h4
+    # print c.encode('hex')
+    # print st[4:8].encode('hex')+st[0:4].encode('hex')
+    return c
+
+
+def convert(rec):
+    ""
+    crec=[None] * 100
+    crec[0]=hex(rec[0])
+    crec[1]=hex(rec[1])
+    crec[2]=hex(rec[2])
+
+    return crec
 
 class DecodeInuTask(QThread):
     signalNumOfRecords=pyqtSignal(int)
@@ -100,15 +129,15 @@ class DecodeInuTask(QThread):
         self.db.close()
         self.pdb.close()
 
-    def __init__(self):
+    def __init__(self,recp):
         ""
         QThread.__init__(self)
         self.numRecords=0
         self.currBytes=0
         self.totalBytes=0
         self.currFile=""
-        self.db=DaqDB("../inu.db")
-        self.pdb=DaqDB("../daq.db")
+        self.db=DaqDB(recp)
+        self.pdb=DaqDB("../../common/daq.db")
 
         ### dataframe attrib ###
         self.INU_SIZE= self.calc_struct_size([self.INU_FORMAT])
@@ -312,7 +341,7 @@ class DecodeInuTask(QThread):
           while(True):
             try:
                 pos_s=fh.tell()
-
+                self.file_pos=pos_s
                 if pos_s+self.INU_SIZE > self.file_size:
                     break
 
@@ -339,13 +368,18 @@ class DecodeInuTask(QThread):
                     ### good records
                     self.num_recs += 1
                     if recordType == self.HEADER_STAT:
-                        rec=struct.unpack(self.stat_fmt,chunk)
+                        recStats=struct.unpack(self.stat_fmt,chunk)
+
 
                     rechash={}
                     rechash.update({
-                        'rIdx':rec[2],'wIdx':rec[3],'counter':rec[1]
+                        'rIdx':recStats[2],'wIdx':recStats[3],'counter':recStats[1]
                     })
-                    rechash.update({'file_index':file_index,  'packet_len':length})
+
+                    counter=unpackex(recStats[1],HI32)
+                    rechash.update({'counter':counter})
+
+                    rechash.update({'file_index':file_index,  'packet_len':length,'file_pos':self.file_pos})
                     # print rechash
                     recBuffer.append(rechash)
                 ### data + stats
@@ -354,19 +388,18 @@ class DecodeInuTask(QThread):
                     ### good records
                     self.num_recs += 1
 
+                    ### trasnform data ###
+                    crec=convert(rec)
 
                     cData,cStats=self.extract_timestamp(chunk)
-                    # print 'data'
-                    # print cData
-                    # print len(cData)
-                    # print len(cStats)
+
                     if len(cData) == self.INU_SIZE and len(cStats) == self.STAT_SIZE:
                         rec=struct.unpack(self.inu_fmt,cData)
                         recStats=struct.unpack(self.stat_fmt,cStats)
 
                         rechash={}
                         rechash.update({
-                                'PRE':rec[0], 'BID':rec[1], 'MID':rec[2], 'LEN':rec[3],
+                                'PRE':crec[0], 'BID':crec[1], 'MID':crec[2], 'LEN':rec[3],
                                 "accX":rec[4], "accY":rec[5], "accZ":rec[6],
                                 'gyrX':rec[7], 'gyrY':rec[8], 'gyrZ':rec[9],
                                 'magX':rec[10], 'magY':rec[11], 'magZ':rec[12],
@@ -384,7 +417,14 @@ class DecodeInuTask(QThread):
                         rechash.update({
                             'rIdx':recStats[2],'wIdx':recStats[3],'counter':recStats[1]
                         })
-                        rechash.update({'file_index':file_index,  'packet_len':length})
+
+
+                        ### new ###
+                        counter=unpackex(recStats[1],HI32)
+                        rechash.update({'counter':counter})
+
+
+                        rechash.update({'file_index':file_index,  'packet_len':length,'file_pos':self.file_pos})
                         recBuffer.append(rechash)
 
 
@@ -398,12 +438,14 @@ class DecodeInuTask(QThread):
                         rec=struct.unpack(self.inu_fmt,chunk)
                         # print self.inu_fmt
 
+                    ### trasnform data ###
+                    crec=convert(rec)
                     ### add in processor info ###
                     timestamp=''
                     rechash={}
 
                     rechash.update({
-                            'PRE':rec[0], 'BID':rec[1], 'MID':rec[2], 'LEN':rec[3],
+                            'PRE':crec[0], 'BID':crec[1], 'MID':crec[2], 'LEN':hex(rec[3]),
                             "accX":rec[4], "accY":rec[5], "accZ":rec[6],
                             'gyrX':rec[7], 'gyrY':rec[8], 'gyrZ':rec[9],
                             'magX':rec[10], 'magY':rec[11], 'magZ':rec[12],
@@ -418,7 +460,7 @@ class DecodeInuTask(QThread):
 
                             })
 
-                    rechash.update({'file_index':file_index,  'packet_len':length})
+                    rechash.update({'file_index':file_index,  'packet_len':length,'file_pos':self.file_pos})
                     recBuffer.append(rechash)
 
                 ### commit interval ###
@@ -535,10 +577,26 @@ class DecodeInuTask(QThread):
 
 
 if __name__ == '__main__':
-    os.remove('../inu.db')
-    shutil.copy('../daq.db','../inu.db')
-    task=DecodeInuTask()
-    task.parse_inu("../client/data/20000101_000736.imu",0)
+    # os.remove('../inu.db')
+    # shutil.copy('../daq.db','../inu.db')
+    # task=DecodeInuTask()
+    # task.parse_inu("../client/data/20000101_000203.imu",0)
+
+    filep="../client/data/20000101_000203.imu"
+    name=os.path.splitext(os.path.basename(filep))[0]
+    recp='%s/%s' % ('c:/datasets/buffer','%s.recI' % name)
+    # os.remove('../enc.db')
+    # shutil.copy('../daq.db','../enc.db')
+    try:
+        os.remove(recp)
+    except:
+        pass
+
+    shutil.copy('../../common/daq.db',recp)
+
+    task=DecodeInuTask(recp)
+    # task.calc_struct_size()
+    task.parse_inu(filep,0)
 
 class DataUtils():
     def __init__(self,cfg,fdr):
@@ -554,7 +612,7 @@ class DataUtils():
         bufferp='%s/%sinu.db' (fdr,filen)
         cfg=Env().getConfig()
         homep=Env().getpath('HOME')
-        dbp=homep+'/common/resources/daq.db'
+        dbp=homep+'/common/daq.db'
         shutil.copy(dbp,bufferp)
         task=DecodeInuTask()
         task.parse_inu(filep,idx)

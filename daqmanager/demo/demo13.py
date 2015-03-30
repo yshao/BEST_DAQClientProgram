@@ -1,3 +1,11 @@
+##############
+# 0. clear previous data
+# 1. home motor
+# 2. starts motor
+# 3. starts DAQ
+# 4. sync time
+
+
 import os
 import telnetlib
 import time
@@ -6,7 +14,7 @@ from common.utils import get_timestamp
 from daqmanager.client.ftpfunc import upload_time, ftp_delete, touch
 import shutil
 
-
+cfg=Env().getConfig()
 
 ### clear data folder ###
 try:
@@ -41,28 +49,6 @@ print t3.read_until(">")
 t3.write("cd FlashDisk/Best"+newline)
 print t3.read_until("Best")
 
-### start motor ###
-t2.write("stop_motor"+newline)
-print t2.read_until(">",3)
-
-t2.write("stop_motor"+newline)
-print t2.read_until(">",3)
-
-t2.write("encoder_home"+newline)
-print t2.read_until(">",5)
-# time.sleep(10)
-
-t2.write("stop_motor"+newline)
-print t2.read_until(">",3)
-time.sleep(2)
-
-t2.write("stop_motor"+newline)
-print t2.read_until(">",3)
-time.sleep(2)
-
-t2.write("encoder_forward"+newline)
-print t2.read_until(">",3)
-# time.sleep(20)
 
 
 t2.write("DAQArchImuS1"+newline)
@@ -78,5 +64,3 @@ upload_time(cfg['archival_ip'],tm)
 upload_time(cfg['encoder_ip'],tm)
 time.sleep(2)
 os.remove(tm)
-
-

@@ -22,12 +22,9 @@ class Env():
         kdb=self.param['HOME']+'/common/resources/daq.kdb'
         parser = IniParser()
         parser.read(config)
-        # pd={}
         pd=parser.as_dict()
-        # print pd
+
         d={}
-        print self.param
-        print pd
         d=pd['base']
         d['radiometer']=pd['radiometer']
 
