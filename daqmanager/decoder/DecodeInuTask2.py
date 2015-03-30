@@ -7,6 +7,26 @@ from PyQt4.QtCore import pyqtSignal, SIGNAL, QThread
 from common.sqliteutils import DaqDB
 from common.env import Env
 
+def unpackex(n,func):
+    # print func(n).encode('hex')
+    return int(func(n).encode('hex'),16)
+
+def HI32(args):
+    st= struct.pack('L',args)
+    # print 'hl'
+    # print st.encode('hex')
+    # print 'h1'
+    # print st[0:4].encode('hex')
+    # print 'h1b'
+    h2=st[0:1]
+    h1=st[1:2]
+    h4=st[2:3]
+    h3=st[3:4]
+    c= h1+h2+h3+h4
+    # print c.encode('hex')
+    # print st[4:8].encode('hex')+st[0:4].encode('hex')
+    return c
+
 
 class DecodeInuTask(QThread):
     signalNumOfRecords=pyqtSignal(int)
@@ -100,14 +120,14 @@ class DecodeInuTask(QThread):
         self.db.close()
         self.pdb.close()
 
-    def __init__(self):
+    def __init__(self,recp):
         ""
         QThread.__init__(self)
         self.numRecords=0
         self.currBytes=0
         self.totalBytes=0
         self.currFile=""
-        self.db=DaqDB("../inu.db")
+        self.db=DaqDB(recp)
         self.pdb=DaqDB("../daq.db")
 
         ### dataframe attrib ###
@@ -339,12 +359,17 @@ class DecodeInuTask(QThread):
                     ### good records
                     self.num_recs += 1
                     if recordType == self.HEADER_STAT:
-                        rec=struct.unpack(self.stat_fmt,chunk)
+                        recStats=struct.unpack(self.stat_fmt,chunk)
+
 
                     rechash={}
                     rechash.update({
-                        'rIdx':rec[2],'wIdx':rec[3],'counter':rec[1]
+                        'rIdx':recStats[2],'wIdx':recStats[3],'counter':recStats[1]
                     })
+
+                    counter=unpackex(recStats[1],HI32)
+                    rechash.update({'counter':counter})
+
                     rechash.update({'file_index':file_index,  'packet_len':length})
                     # print rechash
                     recBuffer.append(rechash)
@@ -384,6 +409,13 @@ class DecodeInuTask(QThread):
                         rechash.update({
                             'rIdx':recStats[2],'wIdx':recStats[3],'counter':recStats[1]
                         })
+
+
+                        ### new ###
+                        counter=unpackex(recStats[1],HI32)
+                        rechash.update({'counter':counter})
+
+
                         rechash.update({'file_index':file_index,  'packet_len':length})
                         recBuffer.append(rechash)
 
@@ -535,8 +567,26 @@ class DecodeInuTask(QThread):
 
 
 if __name__ == '__main__':
-    task=DecodeInuTask()
-    task.parse_inu("data/20000101_000157.imu",0)
+    # os.remove('../inu.db')
+    # shutil.copy('../daq.db','../inu.db')
+    # task=DecodeInuTask()
+    # task.parse_inu("../client/data/20000101_000203.imu",0)
+
+    filep="../client/data/20000101_000203.imu"
+    name=os.path.splitext(os.path.basename(filep))[0]
+    recp='%s/%s' % ('c:/datasets/buffer','%s.recI' % name)
+    # os.remove('../enc.db')
+    # shutil.copy('../daq.db','../enc.db')
+    try:
+        os.remove(recp)
+    except:
+        pass
+
+    shutil.copy('../daq.db',recp)
+
+    task=DecodeInuTask(recp)
+    # task.calc_struct_size()
+    task.parse_inu(filep,0)
 
 class DataUtils():
     def __init__(self,cfg,fdr):

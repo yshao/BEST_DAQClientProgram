@@ -5,12 +5,10 @@ import glob
 import numpy as np
 from astropy import log
 
-# from dr2 import constants
 
 DB_DIR="../daqmanager"
 DB_NAME="daq.db"
 
-import shutil as sl
 import pandas as pd
 
 def convert_timestamp(systemtime):
@@ -109,6 +107,9 @@ class DaqDB(object):
         # Insert
         # cursor.executemany('''insert into data values (?, ?, ?, ?)''', map(tuple, data.tolist()))
         # print ('INSERT INTO '+table+' VALUES (' + ','.join(['?']*len(columns)) + ')' ) % data
+        print( 'INSERT INTO '+table+' VALUES ('
+                                + ','.join(['?']*len(columns)) + ')',
+                                data)
         self.cursor.executemany('INSERT INTO '+table+' VALUES ('
                                 + ','.join(['?']*len(columns)) + ')',
                                 data)
@@ -152,12 +153,12 @@ class DaqDB(object):
         print(self.cursor.fetchall())
 
 
-def create_db_light(table,cols):
+def create_db_light(dbname,table,cols):
     ""
     print "creating table %s" % table
     print "creating columns %s" % cols
 
-    db = DaqDB('daq.db')
+    db = DaqDB(dbname)
     db.optimise_inserts()
     db.create_table(table, cols)
     db.commit()
@@ -186,14 +187,14 @@ INU_COL = ['pre','bid','mid','len',
         'Press','bPrs','ITOW','LAT','LON','ALT','VEL_N','VEL_E','VEL_D',
         'Hacc','Vacc','Sacc','bGPS','TS','Status','CS',
         'counter','wIdx','rIdx','tailsymb',
-        'file_index','timestamp','packet_len'
+        'file_index','timestamp','packet_len','file_pos'
        ]
 
 
 RAD_COL = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8','ch9','ch10','ch11','ch12','hKey',
         'ch13','ch14','ch15','ch16','ch17','ch18','ch19','ch20','ch21','ch22','ch23','ch24',
         'counter','temp','wIdx','rIdx','tailsymb',
-        'file_index','timestamp','packet_len'
+        'file_index','timestamp','packet_len','file_pos'
        ]
 
 GPS_COL = ['pps','counter']
@@ -210,7 +211,7 @@ ENC_COL = ['c1_s1','c1_s2','c1_s3','c1_s4','c1_s5','c1_s6',
                                 'c8_s4','c8_s5',
         'mo1','mo2','encoder_counter',
         'counter','temp','wIdx','rIdx','tailsymb',
-        'file_index','timestamp','packet_len'
+        'file_index','timestamp','packet_len','file_pos'
         ]
 ### Session Table ###
 SESSION_COL = [
@@ -242,7 +243,33 @@ DECODER_COL = ['file_name','file_index','bIdx','packet_len'
 
 
 ### Converted Level 1 Table ###
-DATA_COL = [
+DATA_COL=[
+    'c1_s1','c1_s2','c1_s3','c1_s4','c1_s5','c1_s6',
+        'c2_s1','c2_s2','c2_s3','c2_s4','c2_s5','c2_s6',
+        'c3_s1','c3_s2','c3_s3','c3_s4','c3_s5','c3_s6',
+        'c4_s1','c4_s2','c4_s3','c4_s4','c4_s5','c4_s6',
+        'c5_s1','c5_s2','c5_s3','c5_s4','c5_s5','c5_s6',
+        'c6_s1','c6_s2','c6_s3','c6_s4','c6_s5','c6_s6',
+                                'c8_s4','c8_s5',
+        'mo1','mo2','encoder_counter',
+
+
+
+    'pre','bid','mid','len',
+        'accx', 'accy', 'accz', 'magx', 'magy', 'magz', 'gyrx', 'gyry', 'gyrz', 'temp',
+        'Press','bPrs','ITOW','LAT','LON','ALT','VEL_N','VEL_E','VEL_D',
+        'Hacc','Vacc','Sacc','bGPS','TS','Status','CS',
+
+        'counter','wIdx','rIdx','tailsymb',
+        'file_index','timestamp','packet_len','file_pos'
+
+
+
+
+]
+
+
+LDATA_COL = [
     'raw_data_index',
     'calib_index',
 
@@ -305,25 +332,26 @@ def insert_init():
 
 
 def create_full():
-    create_db_light("inu",INU_COL)
-    create_db_light("gps",GPS_COL)
-    create_db_light("rad",RAD_COL)
-    create_db_light("enc",ENC_COL)
-    create_db_light("calib",ENC_INIT_COL)
-    create_db_light("session",SESSION_COL)
-    create_db_light("decoder",DECODER_COL)
+    create_db_light('daq.db',"inu",INU_COL)
+    create_db_light('daq.db',"gps",GPS_COL)
+    create_db_light('daq.db',"rad",RAD_COL)
+    create_db_light('daq.db',"enc",ENC_COL)
+    create_db_light('daq.db',"calib",ENC_INIT_COL)
+    create_db_light('daq.db',"session",SESSION_COL)
+    create_db_light('daq.db',"decoder",DECODER_COL)
+    create_db_light('daq.db','data',DATA_COL)
     insert_init()
 
 
-    sl.move(DB_NAME,os.path.join(DB_DIR,DB_NAME))
-    src=os.path.join(DB_DIR,DB_NAME)
-    sl.copy(src,os.path.join(DB_DIR,"enc.db"))
-    sl.copy(src,os.path.join(DB_DIR,"rad.db"))
-    sl.copy(src,os.path.join(DB_DIR,"inu.db"))
-    print os.path.join(DB_DIR,DB_NAME)
+    # sl.move(DB_NAME,os.path.join(DB_DIR,DB_NAME))
+    # src=os.path.join(DB_DIR,DB_NAME)
+    # sl.copy(src,os.path.join(DB_DIR,"enc.db"))
+    # sl.copy(src,os.path.join(DB_DIR,"rad.db"))
+    # sl.copy(src,os.path.join(DB_DIR,"inu.db"))
+    # print os.path.join(DB_DIR,DB_NAME)
 
 def create_timedb():
-    create_db_light('time',TIME_COL)
+    create_db_light('time.db','time',TIME_COL)
 
 
 if __name__ == '__main__':
@@ -331,7 +359,7 @@ if __name__ == '__main__':
 # def create_db():
     # sl.rename(os.path.join(DB_DIR,DB_NAME),os.path.join(DB_DIR,DB_NAME+".bk"))
 
-    # create_full()
+    create_full()
     create_timedb()
 
 

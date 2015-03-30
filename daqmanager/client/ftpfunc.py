@@ -19,7 +19,7 @@ def upload_time(ip,tm):
     # time.sleep(2)
 
 
-local_dir='c:/datasets'
+# local_dir='c:/datasets'
 
 class FtpClient(object):
     newline = "\n"
@@ -147,15 +147,11 @@ def ftp_upload(ip,user,pwd,filep):
 
 
 ### poll list
-if __name__ == '__main__':
-    cfg=Env().getConfig()
-    print cfg
+# if __name__ == '__main__':
+#     cfg=Env().getConfig()
+#     print cfg
 
-### poll list
-    fa=ftp_list(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
-    fe=ftp_list(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'])
-    print fa
-    print fe
+
 
 # if __name__ == '__main__':
 # #     cfg=Env().getConfig()
@@ -170,18 +166,18 @@ if __name__ == '__main__':
 #     print cfg['archival_ip']
 
 #### download ####
-    try:
-        os.mkdir('./data')
-    except:
-        pass
-    try:
-        ftp_download(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
-    except:
-        pass
-    try:
-        ftp_download(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
-    except:
-        pass
+    # try:
+    #     os.mkdir('./data')
+    # except:
+    #     pass
+    # try:
+    #     ftp_download(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
+    # except:
+    #     pass
+    # try:
+    #     ftp_download(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
+    # except:
+    #     pass
 
 ### delte
 
@@ -192,8 +188,6 @@ if __name__ == '__main__':
     #
     # ftp_upload(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'],tm)
 
-def sync_timestamp():
-    get_timestamp()
 
 
 

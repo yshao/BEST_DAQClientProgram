@@ -172,7 +172,48 @@ if __name__ == '__main__':
     print dset.scan_files()
     # except:
 
+    files={}
+
+    group={}
+    inuFileGroup=glob.glob('%s/**.inu')
+    for f in inuFileGroup:
+        d={}
+        stat=os.stat(f)
+        d['ctime']=stat.st_ctime
+        d['mtime']=stat.st_mtime
+        group[f]=d
+    files['inu']=group
 
 
+    # print inuFileGroup
+    encFileGroup=glob.glob('%s/**.enc')
+    for f in encFileGroup:
+        d={}
+        stat=os.stat(f)
+        d['ctime']=stat.st_ctime
+        d['mtime']=stat.st_mtime
+        group[f]=d
+    files['enc']=group
 
-    inuFileGroup=glob.glob()
+    # radFileGroup=glob.glob('%s/**.rad')
+
+    # d['fileGroup']['inu']=inuFileGroup
+    # d['fileGroup']['enc']=encFileGroup
+    self.files=files
+
+    db=DatasetDB()
+    basetm=self.basetm
+    for g in self.files.keys():
+        for fname,v in self.files[g].iteritems():
+            print fname, v
+            if g == 'enc':
+                # task=DecodeEncTask()
+                ctime=v['ctime'] + basetm
+                mtime=v['mtime'] + basetm
+                aTime=db.select('select * from counter') + ctime
+
+                db.insert(ctime)
+                db.insert(aTime)
+                db.insert(mtime)
+
+
