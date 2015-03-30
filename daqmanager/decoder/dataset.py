@@ -2,6 +2,9 @@ import glob
 import os
 import shutil
 import time
+import sqlite3
+import pandas
+import numpy as np
 from common.env import Env
 from common.utils import get_timestamp
 from daqmanager.client.ftpfunc import ftp_list, ftp_download, ftp_delete, touch, ftp_upload
@@ -76,8 +79,38 @@ class Dataset():
             fh.write(self.bufferp)
             fh.write(self.res)
 
+
+    def interp_time(self):
+        import pandas.io.sql as psql
+
+        local='c:/datasets/buffer'
+        bufferp='%s/%s' % (local,'20000101_000204.recE')
+        # db=DaqDB(bufferp)
+
+        con = sqlite3.connect(bufferp)
+        # print bufferp
+        with con:
+            dr = psql.frame_query("SELECT counter from enc", con)
+        s=pandas.Series(dr)
+        dr.fillna(np.nan)
+
+        aTime=np.array(dr.interpolate())
+        mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
+        con.executemany('UPDATE enc SET counter=? WHERE rowId=?', mlist)
+
+        con.commit()
+
+    def decode_folder(self):
+        lFiles=get_files()
+        for f in lFiles:
+            if
+
     def create_dataset(self):
-        ""
+
+        lBuffers=get_buffers()
+        for b in lBuffers:
+            interp_time(b)
+            merge_buffers(b)
 
 
 class DatasetMan():
@@ -163,6 +196,10 @@ class DatasetMan():
         # upload_time(cfg['encoder_ip'],tm)
         time.sleep(5)
         os.move(tm,temp)
+
+    def create_dataset(self):
+        ""
+
 
 
 if __name__ == '__main__':
