@@ -1,9 +1,7 @@
-import binascii
-import sys
 import struct
 import os
 from PyQt4.QtCore import pyqtSignal, SIGNAL, QThread
-from best.common.sqliteutils import DaqDB
+from common.sqliteutils import DaqDB
 
 class DecodeRadTask(QThread):
     signalNumOfRecords=pyqtSignal(int)

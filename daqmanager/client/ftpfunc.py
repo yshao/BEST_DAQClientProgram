@@ -70,9 +70,9 @@ class FtpClient(object):
 
 
 
-def ftp_download(ip,user,pwd,local_dir):
+def ftp_download_time(ip,user,pwd,local_dir):
     ftp = ftplib.FTP(ip)
-    print ip
+    # print ip
     ftp.login(user, pwd)
 
     path='/FlashDisk/Data'
@@ -85,6 +85,39 @@ def ftp_download(ip,user,pwd,local_dir):
     for line in data:
         # print "-", line
         fl.append(re.split(' *',line)[3])
+
+    time=[f for f in fl if f.endswitch('time')]
+
+    for f in time:
+        # print
+        with open('%s/%s'%(local_dir,f),'wb') as fh:
+            print 'RETR %s/%s' % (path,f)
+            ftp.retrbinary('RETR %s/%s' % (path,f), fh.write)
+
+
+    ftp.quit()
+    return fl
+
+
+def ftp_download(ip,user,pwd,local_dir):
+    ftp_download_time(ip,user,pwd,local_dir)
+
+    ftp = ftplib.FTP(ip)
+    # print ip
+    ftp.login(user, pwd)
+
+    path='/FlashDisk/Data'
+    data = []
+    ftp.cwd(path)
+    ftp.dir(data.append)
+    # local_dir
+
+    fl=[]
+    for line in data:
+        # print "-", line
+        fl.append(re.split(' *',line)[3])
+
+
 
     for f in sorted(fl):
         # print

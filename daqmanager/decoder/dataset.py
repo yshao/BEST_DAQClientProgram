@@ -20,13 +20,19 @@ class Dataset():
         self.local=cfg['local_dir']
 
         ### builds dataset attributes ###
+        print 'folder %s' % self.path
+        datap='%s/%s' % (self.path,'data')
+        for d in glob.glob('%s/**' % datap):
+            if os.stat(d).st_size < 16:
+                os.remove(d)
+
         self.scan_files()
 
         # self.decode_folder()
 
         self.scan_buffers()
 
-        self.create_dataset()
+        # self.create_dataset()
 
         # self.write_log()
         self.inuGroup=[]
@@ -61,6 +67,7 @@ class Dataset():
             d[f]={}
             d[f]['ctime']=st.st_ctime
             d[f]['mtime']=st.st_mtime
+            print d
             l.append(d)
 
         return l
@@ -82,10 +89,6 @@ class Dataset():
         scannedFiles=glob.glob('%s/buffers/**' %base)
         self.inuRecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recI')]))
         self.encRecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recE')]))
-
-    def merge_all_datasets(self):
-        ""
-
 
     # def make_fullfile(self):
     #   # tm=self.tm
@@ -118,30 +121,28 @@ class Dataset():
             fh.write(self.res)
 
 
-    def interp_time(self,bp):
+    def interp_time(self,bufferp):
         import pandas.io.sql as psql
+        # import numpy as np
 
-        # local='c:/datasets/buffer'
-        # bufferp='%s/%s' % (local,'20000101_000204.recE')
-        # db=DaqDB(bufferp)
         ### interpolate ###
-        bufferp=bp
 
-        if bufferp.endswith('recE'):
-            con = sqlite3.connect(bufferp)
-            # print bufferp
-            with con:
-                dr = psql.frame_query("SELECT counter from enc", con)
-            s=pandas.Series(dr)
-            dr.fillna(np.nan)
+        # if bufferp.endswith('recE'):
+        #     # bufferp=rec.keys()[0]
+        #     print bufferp
+        #     con = sqlite3.connect(bufferp)
+        #     with con:
+        #         dr = psql.frame_query("SELECT counter from enc", con)
+        #
+        #     dr.fillna(np.nan)
+        #
+        #     aTime=np.array(dr.interpolate())
+        #     mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
+        #     con.executemany('UPDATE enc SET counter=? WHERE rowId=?', mlist)
+        #     con.commit()
 
-            aTime=np.array(dr.interpolate())
-            mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
-            con.executemany('UPDATE enc SET counter=? WHERE rowId=?', mlist)
-
-            con.commit()
-
-        elif bufferp.endswith('recI'):
+        if bufferp.endswith('recI'):
+            print bufferp
             ### create secondary buffer ###
             con = sqlite3.connect(bufferp)
             buffer2p=bufferp+'1'
@@ -149,62 +150,40 @@ class Dataset():
                 os.remove(buffer2p)
             except:
                 pass
-
-            shutil.copy('daq.db',buffer2p)
-
+            shutil.copy('../../common/daq.db',buffer2p)
 
             con.execute("attach database '%s' as recI1" % buffer2p)
             con.execute("attach database '%s' as db1" % bufferp)
-            res=con.execute('select * from recI1.calib').fetchall()
-            # res=con.fetchall()
-            # for s in res:
-            #     print s
 
-            sql_con="select * from db1.inu where counter < (select counter from inu where rowid =(select max(rowid) from inu)) order by file_pos"
-
-            res=con.execute("insert into recI1.inu %s" % sql_con).fetchall()
-            # res=con.fetchall()
-            # print len(res)
-            # for s in res:
-            #     print s
-
-
-            # res=con.execute("select * from recI1.calib").fetchall()
-            con = sqlite3.connect(buffer2p)
+            sql_con="""select * from(select * from db1.inu where counter < (select counter from db1.inu where rowid =
+(select max(rowid) from db1.inu where counter is not null)) or counter is null) where CS != 0 order by file_pos
+            """
+            con.execute("insert into recI1.inu %s" % sql_con).fetchall()
+            con.commit()
 
             ### interpolate ###
-            import numpy as np
-            import pandas as pd
+            # import numpy as np
+            # import pandas as pd
 
+            con = sqlite3.connect(buffer2p)
             with con:
                 dr = psql.frame_query("SELECT counter  from inu", con)
 
-            # local='c:/datasets/buffer'
-            # buffer2p='%s/%s' % (local,'20000101_000203.recI')
-            # db=DaqDB(bufferp)
-
-            #
-            s=pd.Series(dr)
+            # s=pd.Series(dr)
             dr.fillna(np.nan)
             aTime=np.array(dr.interpolate())
             mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
-            #
-            # print mlist[0:100]
+
             con.executemany('UPDATE inu SET counter=? WHERE rowId=?', mlist)
             con.commit()
 
 
 
-    def merge_buffer(self,recp):
-        cfg=Env().getConfig()
-        local='c:/datasets/buffer'
-        datap='%s/%s' % (local,'dataset.db')
-
-        shutil.copy('daq.db',datap)
-
+    def merge_buffer(self,bufferp):
+        datap=self.datap
         con = sqlite3.connect(datap)
-
-        if recp['ext'] == 'recE':
+        recp=bufferp
+        if recp.endswith('recE'):
             con.execute("attach database '%s' as db1" % recp)
 
             sql="""c1_s1,c1_s2,c1_s3,c1_s4,c1_s5,c1_s6,
@@ -220,10 +199,8 @@ class Dataset():
 
             con.execute("insert into data(%s) select %s from db1.enc" % (sql,sql))
 
-
-
-        if recp['ext'] == 'recI':
-            con.execute("attach database '%s' as db2" % recp)
+        if recp.endswith('recI'):
+            con.execute("attach database '%s1' as db2" % recp)
             sql= """pre,bid,mid,len,
                     accx, accy, accz, magx, magy, magz, gyrx,gyry,gyrz,temp,
                     Press,bPrs,ITOW,LAT,LON,ALT,VEL_N,VEL_E,VEL_D,
@@ -276,13 +253,19 @@ class Dataset():
 
     def create_dataset(self):
 
-        # lBuffers=self.scan_buffers()
-        # print lBuffers
+        local=self.path
+        datap='%s/%s' % (local,'dataset.db')
+        self.datap=datap
+        shutil.copy('../../common/daq.db',datap)
+
         for b in self.encRecGroup:
             file=b.keys()[0]
-            self.interp_time(b)
-            self.merge_buffer(b)
+            print file
+            self.interp_time(file)
+            self.merge_buffer(file)
 
         for b in self.inuRecGroup:
-            self.interp_time(b)
-            self.merge_buffer(b)
+            file=b.keys()[0]
+            print file
+            self.interp_time(file)
+            self.merge_buffer(file)

@@ -15,6 +15,7 @@ class Env():
         param={}
 
         # param['HOME']=os.environ['BEST_PATH']
+        print os.environ['BEST_PATH']
         param['HOME']='c:/BEST/PRACO/daqclient'
         self.param=param
         # print param
