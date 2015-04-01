@@ -34,14 +34,17 @@ class DatasetMan():
         ""
         temp=self.temp
         local=self.local
-        print temp
-        tm=os.path.splitext(os.path.basename(glob.glob('%s/*.time' % temp)[0]))[0]
-        print tm
-        ep=tm_to_epoch(tm,'%Y%m%d_%H%M%S')
-        print ep
+        try:
+            # print temp
+            tm=os.path.splitext(os.path.basename(glob.glob('%s/*.time' % temp)[0]))[0]
+            # print tm
+            ep=tm_to_epoch(tm,'%Y%m%d_%H%M%S')
+            # print ep
 
-        newfdr='%s/%s/%s' % (local,ep,'data')
-        shutil.move(temp,newfdr)
+            newfdr='%s/%s/%s' % (local,ep,'data')
+            shutil.move(temp,newfdr)
+        except:
+            print "buffer empty"
 
     def getSets(self):
         local=self.local
@@ -90,6 +93,7 @@ class DatasetMan():
 
     def download(self,ip):
         temp=self.temp
+        # print temp
         cfg=self.cfg
         try:
             os.mkdir(temp)

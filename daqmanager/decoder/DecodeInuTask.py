@@ -604,23 +604,3 @@ if __name__ == '__main__':
     task=DecodeInuTask(recp)
     # task.calc_struct_size()
     task.parse_inu(filep,0)
-
-class DataUtils():
-    def __init__(self,cfg,fdr):
-        ""
-        self.cfg=cfg
-
-
-
-    def create_db_buffer(self):
-        ""
-    def decode_inu(self,filep,idx):
-        ### create_buffer ###
-        bufferp='%s/%sinu.db' (fdr,filen)
-        cfg=Env().getConfig()
-        homep=Env().getpath('HOME')
-        dbp=homep+'/common/daq.db'
-        shutil.copy(dbp,bufferp)
-        task=DecodeInuTask()
-        task.parse_inu(filep,idx)
-

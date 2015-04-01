@@ -1,6 +1,13 @@
 from daqmanager.client.utils import epoch_to_tm
 
-# binascii
+# def rad_hex_to_int12(data):
+#     h=''
+#     b1='%04x' % data[0]
+#     b2='%02x' % data[1]
+#     h=b1
+#     val=int(h,16)
+#
+#     return val
 
 def hex_to_int11(data):
     h=''

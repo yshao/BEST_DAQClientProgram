@@ -6,7 +6,7 @@ from daqmanager.decoder.dataset import Dataset
 cfg=Env().getConfig()
 local=cfg['local_dir']
 
-fdr='%s/%s' % (local,'1428000000')
+fdr='%s/%s' % (local,'1428000100')
 dset=Dataset(fdr)
 dset.scan_files()
 # print dset.inuGroup
@@ -16,6 +16,7 @@ dset.scan_buffers()
 
 # print dset.encRecGroup
 # print dset.inuRecGroup
+# print dset radRecGroup
 
 
 # dset.interp_time()

@@ -1,15 +1,47 @@
 import struct
 import os
 from PyQt4.QtCore import pyqtSignal, SIGNAL, QThread
+import shutil
+import sqlite3
 from common.sqliteutils import DaqDB
+from daqmanager.client.utils import tm_to_epoch
+
+
+def H12(a):
+
+    return struct.pack('L')
+
+def H32(args):
+    return struct.pack('L',args)
+
+def H16(a):
+    ""
+
+def convert(rec):
+
+    crec=[None] * 100
+
+    counter=rec[88]
+    crec[88]=unpackex(counter,H32)
+
+    ### encoder
+    for x in [0,17,32,35,38,41,44,61,76,79,82,85]:
+        crec[x]=unpackex(rec[x],H32)
+
+    ### sensor
+
+    return crec
+
+def unpackex(n,func):
+    return int(func(n).encode('hex'),16)
 
 class DecodeRadTask(QThread):
-    signalNumOfRecords=pyqtSignal(int)
-    signalCommit=pyqtSignal()
+    # signalNumOfRecords=pyqtSignal(int)
+    # signalCommit=pyqtSignal()
 
     TAILSYMBA="3A3A"
     TAILSYMBB="3B3B"
-    DB_COMMIT_INTERVAL=5
+    DB_COMMIT_INTERVAL=500
     # cols = ['ch1_1','ch2_1','ch3_1','ch4_1','ch5_1','ch6_1','ch7_1','ch8_1','ch9_1','ch10_1','ch11_1','ch12_1','hKey_1',
     #         'ch1_2','ch2_2','ch3_2','ch4_2','ch5_2','ch6_2','ch7_2','ch8_2','ch9_2','ch10_2','ch11_2','ch12_2','hKey_2',
     #         'counter','temp','wIdx','rIdx','tailsymb']
@@ -38,14 +70,15 @@ class DecodeRadTask(QThread):
         self.db.close()
         self.pdb.close()
 
-    def __init__(self):
+    def __init__(self,recp):
         ""
         QThread.__init__(self)
         self.numRecords=0
         self.currBytes=0
         self.totalBytes=0
         self.currFile=""
-        self.db=DaqDB("../rad.db")
+        self.db=DaqDB(recp)
+        self.pdb=DaqDB("../../common/daq.db")
 
         # self.connect(self,SIGNAL("task_decode()"),self.parse_rad,file)
 
@@ -55,8 +88,8 @@ class DecodeRadTask(QThread):
                         # self.numRecords=num_recs
                         # self.currBytess=
         # self.emit(SIGNAL("decoded_sets()"))
-        self.signalCommit.emit("")
-        self.signalNumOfRecords.emit(self.numRecords)
+        # self.signalCommit.emit("")
+        # self.signalNumOfRecords.emit(self.numRecords)
 
 
     # find the end of first header
@@ -95,9 +128,23 @@ class DecodeRadTask(QThread):
             else:
                 dr=dr+dr1
 
-            if hexsymb == self.TAILSYMBA or hexsymb == self.TAILSYMBB:
+            ### found record
+            if hexsymb == self.TAILSYMBA:
+                # print len(dr)
+                # if len(dr) > 20:
                 # dr=dr+fh.read(4)
-                break
+                    break
+            elif hexsymb == self.TAILSYMBB:
+                fh.seek(-8,1)
+                byte=fh.read(2).encode('hex').upper()
+                # print byte
+                # print hex(fh.tell())
+                # print dr.encode('hex')
+                fh.read(6)
+                if byte == self.TAILSYMBB:
+                    # print byte
+                    # fh.read(6)
+                    break
 
         return hexsymb,dr
 
@@ -126,8 +173,15 @@ class DecodeRadTask(QThread):
           while(True):
             try:
                 pos_s=fh.tell()
+                self.file_pos=pos_s
+                self.file_pos=hex(pos_s)
 
-                if pos_s+self.DAQ_BUFFER_SIZE > file_size:
+                ### break out
+                if pos_s+self.DAQ_BUFFER_SIZE >= file_size:
+                    # print 'HI'
+                    break
+                # print file_size - pos_s -16
+                if file_size - pos_s - 16 < self.DAQ_BUFFER_SIZE:
                     break
 
                 recordType,chunk=self.get_next_record(fh,file_size,pos_s,self.DAQ_BUFFER_SIZE)
@@ -153,51 +207,59 @@ class DecodeRadTask(QThread):
                         rechash.update({"ch1":rec[0], 'ch2':rec[1], 'ch3':rec[2], 'ch4':rec[3], 'ch5':rec[4],
                                         'ch6':rec[5], 'ch7':rec[6], 'ch8':rec[7], 'ch9':rec[8], 'ch10':rec[9],
                                         'ch11':rec[10], 'ch12':rec[11], 'hKey':rec[12]})
+                        rechash.update({'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
                         rechash.update({"ch1":rec[13], 'ch2':rec[14], 'ch3':rec[15], 'ch4':rec[16], 'ch5':rec[17],
                                         'ch6':rec[18], 'ch7':rec[19], 'ch8':rec[20], 'ch9':rec[21], 'ch10':rec[22],
                                         'ch11':rec[23], 'ch12':rec[24], 'hKey':rec[25]})
+                        rechash.update({'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
                         rechash.update({"ch1":rec[26], 'ch2':rec[27], 'ch3':rec[28], 'ch4':rec[29], 'ch5':rec[30],
                                         'ch6':rec[31], 'ch7':rec[32], 'ch8':rec[33], 'ch9':rec[34], 'ch10':rec[35],
                                         'ch11':rec[36], 'ch13':rec[37], 'hKey':rec[38]})
+                        rechash.update({'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
                         rechash.update({"ch1":rec[39], 'ch2':rec[40], 'ch3':rec[41], 'ch4':rec[42], 'ch5':rec[43],
                                         'ch6':rec[44], 'ch7':rec[45], 'ch8':rec[46], 'ch9':rec[47], 'ch10':rec[48],
                                         'ch11':rec[49], 'ch12':rec[50], 'hKey':rec[51]})
-                        # db.insert_dict("rad",rechash)
+                        rechash.update({'file_pos':self.file_pos})
+                        self.db.insert_dict("rad",rechash)
 
                         rechash.update({"counter":rec[52], 'temp':rec[53], 'rIdx':rec[54], 'wIdx':rec[55], 'tailsymb':rec[56]})
-                        rechash.update({'file_index':file_index, 'timestamp':timestamp, 'packet_len':length})
+                        rechash.update({'file_index':file_index, 'timestamp':timestamp, 'packet_len':length, 'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
                     elif recordType == self.TAILSYMBB:
                         rechash.update({"ch13":rec[0], 'ch14':rec[1], 'ch15':rec[2], 'ch16':rec[3], 'ch17':rec[4],
                                         'ch18':rec[5], 'ch19':rec[6], 'ch20':rec[7], 'ch21':rec[8], 'ch22':rec[9],
                                         'ch23':rec[10], 'ch24':rec[11], 'hKey':rec[12]})
+                        rechash.update({'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
 
                         rechash.update({"ch13":rec[13], 'ch14':rec[14], 'ch15':rec[15], 'ch16':rec[16], 'ch17':rec[17],
                                         'ch18':rec[18], 'ch19':rec[19], 'ch20':rec[20], 'ch21':rec[21], 'ch22':rec[22],
                                         'ch23':rec[23], 'ch24':rec[24], 'hKey':rec[25]})
+                        rechash.update({'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
                         rechash.update({"ch13":rec[26], 'ch14':rec[27], 'ch15':rec[28], 'ch16':rec[29], 'ch17':rec[30],
                                         'ch18':rec[31], 'ch19':rec[32], 'ch20':rec[33], 'ch21':rec[34], 'ch22':rec[35],
                                         'ch23':rec[36], 'ch24':rec[37], 'hKey':rec[38]})
+                        rechash.update({'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
                         rechash.update({"ch13":rec[39], 'ch14':rec[40], 'ch15':rec[41], 'ch16':rec[42], 'ch17':rec[43],
                                         'ch18':rec[44], 'ch19':rec[45], 'ch20':rec[46], 'ch21':rec[47], 'ch22':rec[48],
                                         'ch23':rec[49], 'ch24':rec[50], 'hKey':rec[51]})
+                        rechash.update({'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
                         rechash.update({"counter":rec[52], 'temp':rec[53], 'rIdx':rec[54], 'wIdx':rec[55], 'tailsymb':rec[56]})
-                        rechash.update({'file_index':file_index, 'timestamp':timestamp, 'packet_len':length})
+                        rechash.update({'file_index':file_index, 'timestamp':timestamp, 'packet_len':length, 'file_pos':self.file_pos})
                         self.db.insert_dict("rad",rechash)
 
                     num_recs += 1
@@ -213,6 +275,7 @@ class DecodeRadTask(QThread):
                 # if i % DB_COMMIT_INTERVAL == 0 and i > 0:
                 #     db.commit()
                 #     print "commit %s" % i
+                self.db.commit()
 
 
             except Exception,e:
@@ -316,6 +379,56 @@ class DecodeRadTask(QThread):
         return ndr
 
 
+EPOCH2000 = tm_to_epoch('20000101_000000','%Y%m%d_%H%M%S')
+name=os.path.splitext(os.path.basename(file))[0]
+tm=tm_to_epoch(name,'%Y%m%d_%H%M%S')
+tmFile=(tm - EPOCH2000) * 1000
+
 if __name__ == '__main__':
-    task=DecodeRadTask()
-    task.parse_rad("data/20000101_000330.rad",0)
+    EPOCH2000 = tm_to_epoch('20000101_000000','%Y%m%d_%H%M%S')
+
+    file="c:/datasets/1427841838/data/20000101_001333.rad"
+    name=os.path.splitext(os.path.basename(file))[0]
+    recp='%s/%s' % ('c:/datasets','%s.recR22' % name)
+    print name
+    ctime=os.stat(file).st_ctime
+    mtime=os.stat(file).st_mtime
+    tm=tm_to_epoch(name,'%Y%m%d_%H%M%S')
+    tmFile=(tm - EPOCH2000) * 1000
+    tmSt=ctime - EPOCH2000
+    tmEnd=mtime - EPOCH2000
+
+    print ctime, mtime, tm
+    print EPOCH2000, tmSt,tmEnd,tmFile
+
+    # try:
+    #     os.remove(recp)
+    # except:
+    #     pass
+    #
+    # shutil.copy('../../common/daq.db',recp)
+    #
+    # task=DecodeRadTask(recp)
+    #
+    # task.parse_rad(file,0)
+    # task.db.commit()
+    # task.db.close()
+
+    ### insert first stamp ###
+    con = sqlite3.connect(recp)
+    con.execute('update rad set counter=? where rowId=1',(tmFile,))
+    con.commit()
+
+    import numpy as np
+    import pandas.io.sql as psql
+    # con = sqlite3.connect(bufferp)
+    with con:
+        dr = psql.frame_query("SELECT counter  from rad", con)
+
+    # s=pd.Series(dr)
+    dr.fillna(np.nan)
+    aTime=np.array(dr.interpolate())
+    mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
+
+    con.executemany('UPDATE rad SET counter=? WHERE rowId=?', mlist)
+    con.commit()

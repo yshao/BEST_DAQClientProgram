@@ -8,8 +8,8 @@ from common.sqliteutils import DaqDB
 import itertools
 from datautils import *
 
-def c2h(d):
-    return d.encode(hex)
+# def c2h(d):
+#     return d.encode(hex)
 
 
 def convert(rec):
@@ -28,7 +28,6 @@ def convert(rec):
     return crec
 
 def unpackex(n,func):
-    # print func(n).encode('hex')
     return int(func(n).encode('hex'),16)
 
 # h=struct.pack('L',counter).encode('hex')
@@ -647,6 +646,7 @@ if __name__ == '__main__':
     task=DecodeEncTask(recp)
     # task.calc_struct_size()
     task.parse_enc("../client/data/20000101_000204.enc",0)
+    task.db.commit()
 
     ### insert time from enc ###
     cfg=Env().getConfig()

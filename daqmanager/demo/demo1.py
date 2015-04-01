@@ -8,11 +8,11 @@ cfg=Env().getConfig()
 
 datam=DatasetMan()
 
-# datam.clear_buffer()
+datam.clear_buffer()
 
-# datam.download(cfg['archival_ip'])
-# datam.download(cfg['encoder_ip'])
-# datam.download(cfg['radiometer']['rad22_ip'])
+datam.download(cfg['archival_ip'])
+datam.download(cfg['encoder_ip'])
+datam.download(cfg['radiometer']['rad22_ip'])
 
 
 datam.save_buffer()

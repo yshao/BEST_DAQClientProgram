@@ -121,10 +121,6 @@ class DaqDB(object):
             query = 'INSERT INTO '+table+' (%s) VALUES (%s)' % (columns, placeholders)
             self.cursor.execute(query, my_dict)
 
-    # def check_avail(self):
-    #     return True
-
-
     # def update_joins(self):
     #     ""
     #     stmt='INSERT * SELECT * FROM inu SELECT * FROM enc SELECT * FROM rad' \
@@ -253,6 +249,9 @@ DATA_COL=[
                                 'c8_s4','c8_s5',
         'mo1','mo2','encoder_counter',
 
+
+'ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8','ch9','ch10','ch11','ch12','hKey',
+        'ch13','ch14','ch15','ch16','ch17','ch18','ch19','ch20','ch21','ch22','ch23','ch24',
 
 
     'pre','bid','mid','len',

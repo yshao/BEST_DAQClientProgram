@@ -17,10 +17,10 @@ import shutil
 cfg=Env().getConfig()
 
 ### clear data folder ###
-try:
-    shutil.rmtree('data')
-except:
-    pass
+# try:
+#     shutil.rmtree('data')
+# except:
+#     pass
 
 
 cfg=Env().getConfig()

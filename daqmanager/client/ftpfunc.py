@@ -72,7 +72,7 @@ class FtpClient(object):
 
 def ftp_download_time(ip,user,pwd,local_dir):
     ftp = ftplib.FTP(ip)
-    # print ip
+    # print 'time'
     ftp.login(user, pwd)
 
     path='/FlashDisk/Data'
@@ -85,9 +85,11 @@ def ftp_download_time(ip,user,pwd,local_dir):
     for line in data:
         # print "-", line
         fl.append(re.split(' *',line)[3])
+    # print fl
 
-    time=[f for f in fl if f.endswitch('time')]
+    time=[f for f in fl if f.endswith('time')]
 
+    # print time
     for f in time:
         # print
         with open('%s/%s'%(local_dir,f),'wb') as fh:
@@ -96,10 +98,11 @@ def ftp_download_time(ip,user,pwd,local_dir):
 
 
     ftp.quit()
-    return fl
+    # return fl
 
 
 def ftp_download(ip,user,pwd,local_dir):
+    print 'download'
     ftp_download_time(ip,user,pwd,local_dir)
 
     ftp = ftplib.FTP(ip)
@@ -117,10 +120,10 @@ def ftp_download(ip,user,pwd,local_dir):
         # print "-", line
         fl.append(re.split(' *',line)[3])
 
-
+    print fl
 
     for f in sorted(fl):
-        # print
+        print f
         with open('%s/%s'%(local_dir,f),'wb') as fh:
             print 'RETR %s/%s' % (path,f)
             ftp.retrbinary('RETR %s/%s' % (path,f), fh.write)
@@ -186,8 +189,8 @@ def ftp_upload(ip,user,pwd,filep):
 
 
 
-# if __name__ == '__main__':
-# #     cfg=Env().getConfig()
+if __name__ == '__main__':
+    cfg=Env().getConfig()
 # #     tm=get_timestamp()
 # #     tm=tm.replace('-','_')
 # #     touch(tm)
@@ -199,25 +202,26 @@ def ftp_upload(ip,user,pwd,filep):
 #     print cfg['archival_ip']
 
 #### download ####
+    try:
+        os.mkdir('./data')
+    except:
+        pass
     # try:
-    #     os.mkdir('./data')
+    ftp_download(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
     # except:
     #     pass
-    # try:
-    #     ftp_download(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
-    # except:
-    #     pass
-    # try:
-    #     ftp_download(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
-    # except:
-    #     pass
+    try:
+        ftp_download(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
+    except:
+        pass
 
 ### delte
 
     # # ftp_delete(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
     # ftp_delete(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'])
     # ftp_delete(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
-    # # print ftp_list(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
+    print ftp_list(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'])
+    print ftp_list(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'])
     #
     # ftp_upload(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'],tm)
 

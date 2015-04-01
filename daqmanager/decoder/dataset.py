@@ -3,13 +3,16 @@ import os
 import shutil
 import time
 import sqlite3
-import pandas
-import numpy as np
 from common.env import Env
-from common.utils import get_timestamp
-from daqmanager.client.ftpfunc import ftp_list, ftp_download, ftp_delete, touch, ftp_upload
+# from common.utils import get_timestamp
+# from daqmanager.client.ftpfunc import ftp_list, ftp_download, ftp_delete, touch, ftp_upload
+from daqmanager.client.utils import tm_to_epoch
 from daqmanager.decoder.DecodeEncTask3 import DecodeEncTask
 from daqmanager.decoder.DecodeInuTask import DecodeInuTask
+from daqmanager.decoder.DecodeRadTask import DecodeRadTask
+
+import pandas.io.sql as psql
+import numpy as np
 
 
 class Dataset():
@@ -67,6 +70,13 @@ class Dataset():
             d[f]={}
             d[f]['ctime']=st.st_ctime
             d[f]['mtime']=st.st_mtime
+
+            ### time from filename ###
+            EPOCH2000 = tm_to_epoch('20000101_000000','%Y%m%d_%H%M%S')
+            name=os.path.splitext(os.path.basename(file))[0]
+            tm=tm_to_epoch(name,'%Y%m%d_%H%M%S')
+            tmFile=(tm - EPOCH2000) * 1000
+            d[f]['tm']=tmFile
             print d
             l.append(d)
 
@@ -82,6 +92,7 @@ class Dataset():
 
         self.inuGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('imu')]))
         self.encGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('enc')]))
+        self.radGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('rad')]))
 
     def scan_buffers(self):
         ""
@@ -89,6 +100,7 @@ class Dataset():
         scannedFiles=glob.glob('%s/buffers/**' %base)
         self.inuRecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recI')]))
         self.encRecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recE')]))
+        self.rad22RecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recR22')]))
 
     # def make_fullfile(self):
     #   # tm=self.tm
@@ -121,26 +133,25 @@ class Dataset():
             fh.write(self.res)
 
 
-    def interp_time(self,bufferp):
-        import pandas.io.sql as psql
-        # import numpy as np
+    def interp_time(self,bufferp,tmFile):
+        ### interpolate Enc###
+        if bufferp.endswith('recE'):
+            # bufferp=rec.keys()[0]
+            # print bufferp
+            con = sqlite3.connect(bufferp)
+            con.execute('update enc set counter=? where rowId=1',(tmFile,))
+            con.commit()
+            with con:
+                dr = psql.frame_query("SELECT counter from enc", con)
 
-        ### interpolate ###
+            dr.fillna(np.nan)
 
-        # if bufferp.endswith('recE'):
-        #     # bufferp=rec.keys()[0]
-        #     print bufferp
-        #     con = sqlite3.connect(bufferp)
-        #     with con:
-        #         dr = psql.frame_query("SELECT counter from enc", con)
-        #
-        #     dr.fillna(np.nan)
-        #
-        #     aTime=np.array(dr.interpolate())
-        #     mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
-        #     con.executemany('UPDATE enc SET counter=? WHERE rowId=?', mlist)
-        #     con.commit()
+            aTime=np.array(dr.interpolate())
+            mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
+            con.executemany('UPDATE enc SET counter=? WHERE rowId=?', mlist)
+            con.commit()
 
+        ### interpolate Inu###
         if bufferp.endswith('recI'):
             print bufferp
             ### create secondary buffer ###
@@ -162,10 +173,9 @@ class Dataset():
             con.commit()
 
             ### interpolate ###
-            # import numpy as np
-            # import pandas as pd
-
             con = sqlite3.connect(buffer2p)
+            con.execute('update inu set counter=? where rowId=1',(tmFile,))
+            con.commit()
             with con:
                 dr = psql.frame_query("SELECT counter  from inu", con)
 
@@ -177,6 +187,23 @@ class Dataset():
             con.executemany('UPDATE inu SET counter=? WHERE rowId=?', mlist)
             con.commit()
 
+        ### interpolate Rad###
+        # ext=os.path.splitext(os.path.basename(bufferp))[1]
+        if bufferp.endswith('recR22'):
+            con = sqlite3.connect(bufferp)
+            con.execute('update rad set counter=? where rowId=1',(tmFile,))
+            con.commit()
+
+            with con:
+                dr = psql.frame_query("SELECT counter  from rad", con)
+
+            # s=pd.Series(dr)
+            dr.fillna(np.nan)
+            aTime=np.array(dr.interpolate())
+            mlist=[(val[0],i+1) for i,val in enumerate(aTime)]
+
+            con.executemany('UPDATE rad SET counter=? WHERE rowId=?', mlist)
+            con.commit()
 
 
     def merge_buffer(self,bufferp):
@@ -210,12 +237,23 @@ class Dataset():
 
             con.execute("insert into data (%s) select %s from db2.inu" % (sql,sql))
 
+        if recp.endswith('recR22'):
+            con.execute("attach database '%s1' as db3" % recp)
+            sql= """pre,bid,mid,len,
+                    accx, accy, accz, magx, magy, magz, gyrx,gyry,gyrz,temp,
+                    Press,bPrs,ITOW,LAT,LON,ALT,VEL_N,VEL_E,VEL_D,
+                    Hacc,Vacc,Sacc,bGPS,TS,Status,CS,
+                    counter,wIdx,rIdx,tailsymb,
+                    file_index,timestamp,packet_len,file_pos"""
+
+            con.execute("insert into data (%s) select %s from db3.rad" % (sql,sql))
 
         con.commit()
 
     def decode_folder(self):
         encGroup=self.encGroup
         inuGroup=self.inuGroup
+        radGroup=self.radGroup
         local=self.local
 
         # self.lo
@@ -228,17 +266,19 @@ class Dataset():
         except:
             pass
 
-        for i,f in enumerate(encGroup):
-            fp=f.keys()[0]
-            basename=os.path.splitext(os.path.basename(fp))[0]
-            recname='%s.recE' % basename
-            recp='%s/%s' % (fdrp,recname)
-            shutil.copy('../../common/daq.db',recp)
-            # shutil.copy('../../common/daq.db',recp)
-
-            task=DecodeEncTask(recp)
-            task.parse_enc(fp,i)
+        ### decode all encoder ###
+        # for i,f in enumerate(encGroup):
+        #     fp=f.keys()[0]
+        #     basename=os.path.splitext(os.path.basename(fp))[0]
+        #     recname='%s.recE' % basename
+        #     recp='%s/%s' % (fdrp,recname)
+        #     shutil.copy('../../common/daq.db',recp)
+        #     # shutil.copy('../../common/daq.db',recp)
         #
+        #     task=DecodeEncTask(recp)
+        #     task.parse_enc(fp,i)
+
+        ### decode all inu ###
         for i,f in enumerate(inuGroup):
             fp=f.keys()[0]
             basename=os.path.splitext(os.path.basename(fp))[0]
@@ -248,6 +288,17 @@ class Dataset():
 
             task=DecodeInuTask(recp)
             task.parse_inu(fp,i)
+
+        ### decode all rad ###
+        for i,f in enumerate(radGroup):
+            fp=f.keys()[0]
+            basename=os.path.splitext(os.path.basename(fp))[0]
+            recname='%s.recR22' % basename
+            recp='%s/%s' % (fdrp,recname)
+            shutil.copy('../../common/daq.db',recp)
+
+            task=DecodeRadTask(recp)
+            task.parse_rad(fp,i)
 
         self.scan_buffers()
 
@@ -265,6 +316,12 @@ class Dataset():
             self.merge_buffer(file)
 
         for b in self.inuRecGroup:
+            file=b.keys()[0]
+            print file
+            self.interp_time(file)
+            self.merge_buffer(file)
+
+        for b in self.rad22RecGroup:
             file=b.keys()[0]
             print file
             self.interp_time(file)
