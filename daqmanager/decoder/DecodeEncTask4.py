@@ -62,41 +62,27 @@ class DecodeEncTask(QThread):
 
     DB_COMMIT_INTERVAL=5
 
+    # 1000 = enc mo1 mo2 counter rIdx wIdx
+    # each row = 100 ms, each col = 10 ms
+    #
+    # total state machine time = 540ms
     # current state machine
-    #   enc mo1 mo2 15 25 35 45 55 65 85
-    #   enc mo1 mo2 12 22 32 42 52 62
-    #   enc mo1 mo2
-    #   enc mo1 mo2
-    #   enc mo1 mo2 14 24 34 44 54 64 84
-    #   enc mo1 mo2 16 26 36 46 56 66
-    #   enc mo1 mo2
-    #   enc mo1 mo2
-    #   enc mo1 mo2 12 22 32 42 52 62
-    #   enc mo1 mo2
-    #   enc mo1 mo2
-    #   enc mo1 mo2 16 26 36 46 56 66
-    #   enc mo1 mo2
-    #   enc mo1 mo2
+    #   1000 15 25 35 45 55 65 85
+    #   1000 12 22 32 42 52 62
+    #   1000
+    #   1000
+    #   1000 14 24 34 44 54 64 84
+    #   1000 16 26 36 46 56 66
+    #   1000
+    #   1000
+    #   1000 12 22 32 42 52 62
+    #   1000
+    #   1000
+    #   1000 16 26 36 46 56 66
+    #   1000
+    #   1000
     #   rIdx wIdx counter 3C3C
 
-    # DAQ_FORMAT_LIST=[ ">LHH","s<HBs<HBs<HBs<HBs<HBs<HBs<HB",
-    #                    ">LHH","s<HBs<HBs<HBs<HBs<HBs<HB",
-    #                    ">LHH",
-    #                    ">LHH",
-    #                    ">LHH","s<HBs<HBs<HBs<HBs<HBs<HBs<HB",
-    #                    ">LHH","s<HBs<HBs<HBs<HBs<HBs<HB",
-    #                    ">LHH",
-    #                    ">LHH",
-    #                    ">LHH","s<HBs<HBs<HBs<HBs<HBs<HB",
-    #                    ">LHH",
-    #                    ">LHH",
-    #                    ">LHH","s<HBs<HBs<HBs<HBs<HBs<HB",
-    #                    ">LHH",
-    #                    ">LHH",
-    #                    ">HHL2s",
-    # ]
-
-    #bakcup
     DAQ_FORMAT_LIST=[ ">LHHLHH","sHBsHBsHBsHBsHBsHBsHB",
                        "LHHLHH","sHBsHBsHBsHBsHBsHB",
                        "LHHLHH",

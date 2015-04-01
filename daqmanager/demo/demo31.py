@@ -31,3 +31,8 @@ print t2.read_until(">",5)
 t2.write(HOME)
 print t2.read_until(">",5)
 time.sleep(15)
+
+t2.write(STOP)
+print t2.read_until(">",5)
+t2.write(STOP)
+print t2.read_until(">",5)

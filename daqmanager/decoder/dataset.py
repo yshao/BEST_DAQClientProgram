@@ -97,7 +97,7 @@ class Dataset():
         ""
         base=self.path
         scannedFiles=glob.glob('%s/buffers/**' %base)
-        self.inuRecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recI')]))
+        self.inuRecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recI1')]))
         self.encRecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recE')]))
         self.rad22RecGroup=self.read_stats(np.sort([f for f in scannedFiles if f.endswith('recR22')]))
 
@@ -133,6 +133,7 @@ class Dataset():
 
 
     def interp_time(self,bufferp,tmFile):
+        print 'interpolating time'
         ### interpolate Enc###
         if bufferp.endswith('recE'):
             # bufferp=rec.keys()[0]
@@ -206,6 +207,7 @@ class Dataset():
 
 
     def merge_buffer(self,bufferp):
+        print 'merge records'
         datap=self.datap
         con = sqlite3.connect(datap)
         recp=bufferp
@@ -226,7 +228,8 @@ class Dataset():
 
             con.execute("insert into data(%s) select %s from db1.enc" % (sql,sql))
 
-        if recp.endswith('recI'):
+        if recp.endswith('recI1'):
+            print recp
             con.execute("attach database '%s1' as db2" % recp)
             sql= """pre,bid,mid,len,
                     accx, accy, accz, magx, magy, magz, gyrx,gyry,gyrz,temp,
@@ -249,14 +252,17 @@ class Dataset():
         con.commit()
 
     def sync(self):
+
+        print 'synchronizing'
         datap=self.datap
 
-        print datap
+        # print datap
         old=datap+'unsort'
-        print old
+        # print old
         try:
+            os.remove(old)
             os.rename(datap,old)
-            os.remove(datap)
+            # os.remove(datap)
         except:
             pass
 
@@ -337,20 +343,20 @@ class Dataset():
 
         for b in self.encRecGroup:
             file=b.keys()[0]
-            # fileb=b[0]
             # self.interp_time(file,b[file]['tm'])
+            print b
             self.merge_buffer(file)
 
         for b in self.inuRecGroup:
             file=b.keys()[0]
             # self.interp_time(file,b[file]['tm'])
-            # print b
+            print b
             self.merge_buffer(file)
 
         for b in self.rad22RecGroup:
             file=b.keys()[0]
             # self.interp_time(file,b[file]['tm'])
-            # print b
+            print b
             self.merge_buffer(file)
 
         self.sync()
