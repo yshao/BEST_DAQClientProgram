@@ -16,17 +16,3 @@ datam.download(cfg['radiometer']['rad22_ip'])
 
 
 datam.save_buffer()
-# try:
-#     os.mkdir('./data')
-# except:
-#     pass
-# try:
-#     ftp_download(cfg['archival_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
-# except:
-#     pass
-# try:
-#     ftp_download(cfg['encoder_ip'],cfg['praco_username'],cfg['praco_password'],'./data')
-# except:
-#     pass
-
-# datam.archive()

@@ -30,14 +30,12 @@ class Dataset():
                 os.remove(d)
 
         self.scan_files()
-
-        # self.decode_folder()
-
         self.scan_buffers()
 
-        # self.create_dataset()
+        local=self.path
+        datap='%s/%s' % (local,'dataset.db')
+        self.datap=datap
 
-        # self.write_log()
         self.inuGroup=[]
         self.encGroup=[]
         self.radGroup=[]
@@ -73,13 +71,14 @@ class Dataset():
 
             ### time from filename ###
             EPOCH2000 = tm_to_epoch('20000101_000000','%Y%m%d_%H%M%S')
-            name=os.path.splitext(os.path.basename(file))[0]
+            name=os.path.splitext(os.path.basename(f))[0]
             tm=tm_to_epoch(name,'%Y%m%d_%H%M%S')
             tmFile=(tm - EPOCH2000) * 1000
             d[f]['tm']=tmFile
             print d
             l.append(d)
 
+        # print
         return l
 
     def scan_files(self):
@@ -153,7 +152,7 @@ class Dataset():
 
         ### interpolate Inu###
         if bufferp.endswith('recI'):
-            print bufferp
+            # print bufferp
             ### create secondary buffer ###
             con = sqlite3.connect(bufferp)
             buffer2p=bufferp+'1'
@@ -210,6 +209,7 @@ class Dataset():
         datap=self.datap
         con = sqlite3.connect(datap)
         recp=bufferp
+        # print recp
         if recp.endswith('recE'):
             con.execute("attach database '%s' as db1" % recp)
 
@@ -238,17 +238,43 @@ class Dataset():
             con.execute("insert into data (%s) select %s from db2.inu" % (sql,sql))
 
         if recp.endswith('recR22'):
-            con.execute("attach database '%s1' as db3" % recp)
-            sql= """pre,bid,mid,len,
-                    accx, accy, accz, magx, magy, magz, gyrx,gyry,gyrz,temp,
-                    Press,bPrs,ITOW,LAT,LON,ALT,VEL_N,VEL_E,VEL_D,
-                    Hacc,Vacc,Sacc,bGPS,TS,Status,CS,
-                    counter,wIdx,rIdx,tailsymb,
-                    file_index,timestamp,packet_len,file_pos"""
+            con.execute("attach database '%s' as db3" % recp)
+            sql= """ch1,ch2,ch3,ch4,ch5,ch6,ch7,ch8,ch9,ch10,ch11,ch12,hKey,
+        ch13,ch14,ch15,ch16,ch17,ch18,ch19,ch20,ch21,ch22,ch23,ch24,
+        counter,temp,wIdx,rIdx,tailsymb,
+        file_index,timestamp,packet_len,file_pos"""
 
             con.execute("insert into data (%s) select %s from db3.rad" % (sql,sql))
 
         con.commit()
+
+    def sync(self):
+        datap=self.datap
+
+        print datap
+        old=datap+'unsort'
+        print old
+        try:
+            os.rename(datap,old)
+            os.remove(datap)
+        except:
+            pass
+
+        shutil.copy('../../common/daq.db',datap)
+        con = sqlite3.connect(datap)
+
+
+        # recp=bufferp
+        con.execute("attach database '%s' as dbmain" % old)
+        con.execute("insert into data select * from dbmain.data where counter is not null order by counter")
+        con.commit()
+
+        try:
+            os.remove(old)
+        except:
+            pass
+
+
 
     def decode_folder(self):
         encGroup=self.encGroup
@@ -266,7 +292,7 @@ class Dataset():
         except:
             pass
 
-        ### decode all encoder ###
+        ### decode all enc ###
         # for i,f in enumerate(encGroup):
         #     fp=f.keys()[0]
         #     basename=os.path.splitext(os.path.basename(fp))[0]
@@ -303,26 +329,55 @@ class Dataset():
         self.scan_buffers()
 
     def create_dataset(self):
-
         local=self.path
         datap='%s/%s' % (local,'dataset.db')
         self.datap=datap
+        # print 'DATASET',self.datap
         shutil.copy('../../common/daq.db',datap)
 
         for b in self.encRecGroup:
             file=b.keys()[0]
-            print file
-            self.interp_time(file)
+            # fileb=b[0]
+            # self.interp_time(file,b[file]['tm'])
             self.merge_buffer(file)
 
         for b in self.inuRecGroup:
             file=b.keys()[0]
-            print file
-            self.interp_time(file)
+            # self.interp_time(file,b[file]['tm'])
+            # print b
             self.merge_buffer(file)
 
         for b in self.rad22RecGroup:
             file=b.keys()[0]
-            print file
-            self.interp_time(file)
+            # self.interp_time(file,b[file]['tm'])
+            # print b
             self.merge_buffer(file)
+
+        self.sync()
+
+    def interp_dataset(self):
+
+        local=self.path
+        datap='%s/%s' % (local,'dataset.db')
+        self.datap=datap
+        # print 'DATASET',self.datap
+        shutil.copy('../../common/daq.db',datap)
+
+        for b in self.encRecGroup:
+            file=b.keys()[0]
+            # fileb=b[0]
+            self.interp_time(file,b[file]['tm'])
+            # self.merge_buffer(file)
+
+        for b in self.inuRecGroup:
+            file=b.keys()[0]
+            self.interp_time(file,b[file]['tm'])
+            # print b
+            # self.merge_buffer(file)
+
+        for b in self.rad22RecGroup:
+            file=b.keys()[0]
+            self.interp_time(file,b[file]['tm'])
+            # print b
+            # self.merge_buffer(file)
+

@@ -379,10 +379,10 @@ class DecodeRadTask(QThread):
         return ndr
 
 
-EPOCH2000 = tm_to_epoch('20000101_000000','%Y%m%d_%H%M%S')
-name=os.path.splitext(os.path.basename(file))[0]
-tm=tm_to_epoch(name,'%Y%m%d_%H%M%S')
-tmFile=(tm - EPOCH2000) * 1000
+# EPOCH2000 = tm_to_epoch('20000101_000000','%Y%m%d_%H%M%S')
+# name=os.path.splitext(os.path.basename(file))[0]
+# tm=tm_to_epoch(name,'%Y%m%d_%H%M%S')
+# tmFile=(tm - EPOCH2000) * 1000
 
 if __name__ == '__main__':
     EPOCH2000 = tm_to_epoch('20000101_000000','%Y%m%d_%H%M%S')

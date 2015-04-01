@@ -354,21 +354,15 @@ def create_timedb():
 
 
 if __name__ == '__main__':
-    # generate tables
-# def create_db():
-    # sl.rename(os.path.join(DB_DIR,DB_NAME),os.path.join(DB_DIR,DB_NAME+".bk"))
+    ### remove db ###
+    try:
+        os.remove('daq.db')
+    except:
+        pass
+    try:
+        os.remove('time.db')
+    except:
+        pass
 
     create_full()
     create_timedb()
-
-
-
-
-    # sl.move(DB_NAME,os.path.join(DB_DIR,DB_NAME))
-    # src=os.path.join(DB_DIR,DB_NAME)
-    # sl.copy(src,os.path.join(DB_DIR,"enc.db"))
-    # sl.copy(src,os.path.join(DB_DIR,"rad.db"))
-    # sl.copy(src,os.path.join(DB_DIR,"inu.db"))
-    # print os.path.join(DB_DIR,DB_NAME)
-
-
